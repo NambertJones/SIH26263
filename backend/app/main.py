@@ -77,13 +77,54 @@ app.include_router(audit.router)
 app.include_router(certificate.router)
 
 
-@app.get("/")
-def root():
-    """Health check endpoint."""
-    return {
-        "app": settings.APP_NAME,
-        "version": settings.APP_VERSION,
-        "status": "online",
-        "demo_mode": True,
-        "docs_url": "/docs",
-    }
+import os
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Check potential frontend dist paths (local dev vs container/monorepo)
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
+)
+if not os.path.exists(FRONTEND_DIST):
+    FRONTEND_DIST = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "dist")
+    )
+
+if os.path.exists(FRONTEND_DIST) and os.path.isdir(FRONTEND_DIST):
+    assets_dir = os.path.join(FRONTEND_DIST, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    @app.get("/{full_path:path}")
+    def serve_frontend_spa(full_path: str):
+        """Serve frontend static assets or fallback to SPA index.html."""
+        if full_path.startswith("api/") or full_path in ("docs", "redoc", "openapi.json"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Not Found")
+        
+        target_file = os.path.join(FRONTEND_DIST, full_path)
+        if os.path.isfile(target_file):
+            return FileResponse(target_file)
+        
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        
+        return {
+            "app": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "status": "online",
+            "demo_mode": True,
+        }
+else:
+    @app.get("/")
+    def root():
+        """Health check endpoint when frontend dist is not present."""
+        return {
+            "app": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "status": "online",
+            "demo_mode": True,
+            "docs_url": "/docs",
+        }
+

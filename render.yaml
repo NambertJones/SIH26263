@@ -1,0 +1,20 @@
+# Render Blueprint specification for APAAR ReconX
+# https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: apaar-reconx
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SEED_ON_STARTUP
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "480"

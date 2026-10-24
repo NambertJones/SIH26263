@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  apaar-reconx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apaar-reconx-app
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - SEED_ON_STARTUP=true
+      - SECRET_KEY=apaar-reconx-production-secret-change-in-prod
+      - ACCESS_TOKEN_EXPIRE_MINUTES=480
+    restart: unless-stopped

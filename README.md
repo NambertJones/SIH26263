@@ -107,5 +107,38 @@ npm run dev
 
 ---
 
+## ☁️ Cloud Deployment & Production Hosting
+
+### Option 1: Render (1-Click Blueprint Deploy)
+The repository includes a ready-to-use [`render.yaml`](file:///d:/SIH/SIH26263/render.yaml) blueprint:
+1. Log in to [Render.com](https://render.com) using your GitHub account (`NambertJones`).
+2. Click **New +** > **Blueprint**.
+3. Select this repository (`NambertJones/SIH26263`).
+4. Render will automatically build the React frontend and deploy the FastAPI backend inside a unified container with HTTPS enabled.
+
+### Option 2: Docker Container (Local or VPS)
+To run the full-stack container locally or on any cloud virtual machine (AWS EC2, DigitalOcean, Linode):
+```bash
+# Build and run with Docker Compose
+docker compose up --build -d
+```
+The application will be live at `http://localhost:8000`.
+
+### Option 3: Unified FastAPI Static Production Build
+You can build the frontend and serve both UI and API from a single Node/Python host:
+```bash
+# 1. Build frontend
+cd frontend
+npm run build
+
+# 2. Start FastAPI production server
+cd ../backend
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+FastAPI automatically serves `frontend/dist` for all web pages and mounts all `/api` endpoints seamlessly.
+
+---
+
 ## 📄 License & Attribution
-Developed for the **Smart India Hackathon 2026**. All government registry adapters are clearly simulated for demonstration purposes.
+Developed for the **Smart India Hackathon 2026** (Problem Statement: SIH26263). All government registry adapters (APAAR, DigiLocker, AICTE, AISHE) are mock interfaces for demonstration purposes.
+
