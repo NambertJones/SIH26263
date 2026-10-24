@@ -1,0 +1,76 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { DashboardLayout } from './components/layout/DashboardLayout';
+
+// 12 Screen Pages
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { StudentDataUploadPage } from './pages/StudentDataUploadPage';
+import { ColumnMappingPage } from './pages/ColumnMappingPage';
+import { ValidationResultsPage } from './pages/ValidationResultsPage';
+import { StudentRecordsListPage } from './pages/StudentRecordsListPage';
+import { StudentRecordDetailsPage } from './pages/StudentRecordDetailsPage';
+import { VerificationCasesPage } from './pages/VerificationCasesPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { IntegrationsPage } from './pages/IntegrationsPage';
+import { UserManagementPage } from './pages/UserManagementPage';
+import { InstitutionSettingsPage } from './pages/InstitutionSettingsPage';
+import { CertificatePreviewPage } from './pages/CertificatePreviewPage';
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#070d18] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-amber-400" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="upload" element={<StudentDataUploadPage />} />
+            <Route path="mapping" element={<ColumnMappingPage />} />
+            <Route path="validation" element={<ValidationResultsPage />} />
+            <Route path="students" element={<StudentRecordsListPage />} />
+            <Route path="students/:id" element={<StudentRecordDetailsPage />} />
+            <Route path="cases" element={<VerificationCasesPage />} />
+            <Route path="reports" element={<ReportsPage />} />
+            <Route path="integrations" element={<IntegrationsPage />} />
+            <Route path="users" element={<UserManagementPage />} />
+            <Route path="settings" element={<InstitutionSettingsPage />} />
+            <Route path="certificate" element={<CertificatePreviewPage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+};
+
+export default App;

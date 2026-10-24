@@ -1,0 +1,103 @@
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  LayoutDashboard,
+  UploadCloud,
+  Split,
+  CheckCircle2,
+  Users,
+  AlertOctagon,
+  BarChart3,
+  Network,
+  UserCog,
+  Building2,
+  Award,
+} from 'lucide-react';
+
+interface NavItem {
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+  badge?: string;
+  screenNo: number;
+}
+
+export const Sidebar: React.FC = () => {
+  const { user } = useAuth();
+
+  const navItems: NavItem[] = [
+    { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" />, screenNo: 2 },
+    { name: 'Upload Data', path: '/upload', icon: <UploadCloud className="w-4 h-4" />, screenNo: 3 },
+    { name: 'Column Mapping', path: '/mapping', icon: <Split className="w-4 h-4" />, screenNo: 4 },
+    { name: 'Validation Results', path: '/validation', icon: <CheckCircle2 className="w-4 h-4" />, screenNo: 5 },
+    { name: 'Student Records', path: '/students', icon: <Users className="w-4 h-4" />, screenNo: 6 },
+    { name: 'Verification Cases', path: '/cases', icon: <AlertOctagon className="w-4 h-4" />, screenNo: 7 },
+    { name: 'Reports & Analytics', path: '/reports', icon: <BarChart3 className="w-4 h-4" />, screenNo: 8 },
+    { name: 'Integrations', path: '/integrations', icon: <Network className="w-4 h-4" />, badge: 'Simulated', screenNo: 9 },
+    { name: 'User Management', path: '/users', icon: <UserCog className="w-4 h-4" />, screenNo: 10 },
+    { name: 'Institution Settings', path: '/settings', icon: <Building2 className="w-4 h-4" />, screenNo: 11 },
+    { name: 'Certificate Preview', path: '/certificate', icon: <Award className="w-4 h-4" />, screenNo: 12 },
+  ];
+
+  return (
+    <aside className="w-64 bg-[#081220] border-r border-[#192f50] flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none overflow-y-auto">
+      <div className="py-4">
+        {/* Current Institution Info */}
+        <div className="mx-4 mb-4 p-3 bg-[#0d1a30] rounded-lg border border-[#1b355a]">
+          <p className="text-[10px] font-semibold tracking-wider text-amber-400 uppercase">
+            Active Institution
+          </p>
+          <p className="text-xs font-medium text-white truncate mt-0.5">
+            {user?.institution_name || "St. Joseph's College of Engineering"}
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">AICTE ID: 1-1234567B</p>
+        </div>
+
+        {/* Navigation Section */}
+        <div className="px-3">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+            Platform Workflow
+          </p>
+          <nav className="space-y-1">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
+                    isActive
+                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-500/5 text-amber-300 border-l-2 border-amber-400 font-semibold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                  }`
+                }
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-slate-400 group-hover:text-amber-400 transition">
+                    {item.icon}
+                  </span>
+                  <span>{item.name}</span>
+                </div>
+                {item.badge ? (
+                  <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">
+                    {item.badge}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-600 group-hover:text-slate-400 font-mono">
+                    S{item.screenNo}
+                  </span>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Bottom Footer Info */}
+      <div className="p-4 border-t border-[#162a48] text-center bg-[#070e1a]">
+        <div className="text-[11px] text-slate-400 font-medium">Smart India Hackathon 2026</div>
+        <div className="text-[10px] text-slate-500">Problem Statement: SIH26263</div>
+      </div>
+    </aside>
+  );
+};
