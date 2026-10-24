@@ -26,9 +26,9 @@ backend/uploads/*
 # Node & Frontend
 node_modules/
 frontend/node_modules/
-frontend/dist/
-dist/
+# frontend/dist and dist are intentionally tracked for zero-dependency cloud deployments (Render/Railway/Vercel)
 *.log
+
 
 # Environment & IDE
 .env

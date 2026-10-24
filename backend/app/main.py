@@ -95,6 +95,19 @@ if os.path.exists(FRONTEND_DIST) and os.path.isdir(FRONTEND_DIST):
     if os.path.exists(assets_dir):
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
+    @app.get("/")
+    def serve_index():
+        """Serve index.html at root."""
+        index_file = os.path.join(FRONTEND_DIST, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+        return {
+            "app": settings.APP_NAME,
+            "version": settings.APP_VERSION,
+            "status": "online",
+            "demo_mode": True,
+        }
+
     @app.get("/{full_path:path}")
     def serve_frontend_spa(full_path: str):
         """Serve frontend static assets or fallback to SPA index.html."""
