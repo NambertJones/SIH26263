@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { studentsApi, institutionsApi } from '../api/client';
+import { studentsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { Users, Search, Filter, ArrowRight, UserPlus, FileSpreadsheet } from 'lucide-react';
+import { Users, Search, FileSpreadsheet } from 'lucide-react';
 
 export const StudentRecordsListPage: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -37,18 +37,18 @@ export const StudentRecordsListPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-            <Users className="w-5 h-5 text-amber-400" />
+          <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-600" />
             <span>Master Student Directory & Verification Records</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1 font-medium">
             Comprehensive institutional registry of all enrolled students with APAAR reconciliation states.
           </p>
         </div>
 
         <button
           onClick={() => navigate('/upload')}
-          className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold rounded-lg text-xs shadow-md shadow-amber-500/20 transition"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm shadow-blue-500/20 transition cursor-pointer"
         >
           <FileSpreadsheet className="w-3.5 h-3.5" />
           <span>Upload New Batch</span>
@@ -56,7 +56,7 @@ export const StudentRecordsListPage: React.FC = () => {
       </div>
 
       {/* Filter Tabs & Search */}
-      <div className="glass-panel p-4 rounded-xl border border-[#1b3459] flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
           {[
             { id: 'all', label: `All Students (${totalCount})` },
@@ -68,10 +68,10 @@ export const StudentRecordsListPage: React.FC = () => {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap cursor-pointer ${
                 statusFilter === tab.id
-                  ? 'bg-amber-500 text-slate-950 font-bold'
-                  : 'bg-[#081220] text-slate-400 hover:text-white'
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
               }`}
             >
               {tab.label}
@@ -80,55 +80,55 @@ export const StudentRecordsListPage: React.FC = () => {
         </div>
 
         <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
             type="text"
             placeholder="Search student, APAAR ID, roll..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#081220] border border-[#1b3459] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
           />
         </div>
       </div>
 
       {/* Table */}
-      <div className="glass-panel rounded-xl border border-[#1b3459] overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#1b3459] bg-[#0c172a] text-slate-400">
-                <th className="py-3 px-4 font-semibold">Roll No</th>
-                <th className="py-3 px-4 font-semibold">Student Name</th>
-                <th className="py-3 px-4 font-semibold">APAAR ID</th>
-                <th className="py-3 px-4 font-semibold">Programme</th>
-                <th className="py-3 px-4 font-semibold">Gender / Category</th>
-                <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold text-right">Inspect</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
+                <th className="py-3 px-4 font-bold">Roll No</th>
+                <th className="py-3 px-4 font-bold">Student Name</th>
+                <th className="py-3 px-4 font-bold">APAAR ID</th>
+                <th className="py-3 px-4 font-bold">Programme</th>
+                <th className="py-3 px-4 font-bold">Gender / Category</th>
+                <th className="py-3 px-4 font-bold">Status</th>
+                <th className="py-3 px-4 font-bold text-right">Inspect</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#152a48] text-slate-300">
+            <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">
                     Loading student records...
                   </td>
                 </tr>
               ) : students.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                  <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">
                     No students found matching current filter.
                   </td>
                 </tr>
               ) : (
                 students.map((st) => (
-                  <tr key={st.id} className="hover:bg-slate-800/30 transition">
-                    <td className="py-3 px-4 font-mono text-slate-400">{st.institute_roll_no || '-'}</td>
-                    <td className="py-3 px-4 font-semibold text-white">{st.name}</td>
-                    <td className="py-3 px-4 font-mono text-amber-300">
-                      {st.apaar_id || <span className="text-rose-400 font-sans italic">Missing</span>}
+                  <tr key={st.id} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3 px-4 font-mono text-slate-400 font-medium">{st.institute_roll_no || '-'}</td>
+                    <td className="py-3 px-4 font-semibold text-slate-900">{st.name}</td>
+                    <td className="py-3 px-4 font-mono text-blue-700 font-semibold">
+                      {st.apaar_id || <span className="text-rose-600 font-sans italic font-medium">Missing</span>}
                     </td>
-                    <td className="py-3 px-4 text-slate-400">{st.programme_name || 'CSE'}</td>
-                    <td className="py-3 px-4 text-slate-400">
+                    <td className="py-3 px-4 text-slate-600 font-medium">{st.programme_name || 'CSE'}</td>
+                    <td className="py-3 px-4 text-slate-600 font-medium">
                       {st.gender} ({st.category || 'General'})
                     </td>
                     <td className="py-3 px-4">
@@ -137,7 +137,7 @@ export const StudentRecordsListPage: React.FC = () => {
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => navigate(`/students/${st.id}`)}
-                        className="px-2.5 py-1 bg-[#12233f] hover:bg-[#1a335a] border border-amber-500/40 text-amber-300 rounded font-semibold text-xs transition"
+                        className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded font-semibold text-xs transition cursor-pointer"
                       >
                         Inspect Record →
                       </button>

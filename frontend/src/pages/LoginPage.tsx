@@ -39,54 +39,54 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#060b14] flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background radial glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Container */}
       <div className="w-full max-w-md relative z-10">
         {/* Header Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-0.5 shadow-xl shadow-amber-500/20 mb-4">
-            <div className="w-full h-full bg-[#081220] rounded-[14px] flex items-center justify-center">
-              <ShieldCheck className="w-8 h-8 text-amber-400" />
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-700 via-blue-600 to-indigo-600 p-0.5 shadow-md shadow-blue-500/20 mb-3.5">
+            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
+              <ShieldCheck className="w-8 h-8 text-blue-600" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white mb-1">APAAR ReconX</h1>
-          <p className="text-xs text-amber-400/90 font-medium uppercase tracking-widest mb-1">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1">APAAR ReconX</h1>
+          <p className="text-xs text-blue-700 font-bold uppercase tracking-widest mb-1">
             ALL INDIA COUNCIL FOR TECHNICAL EDUCATION
           </p>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Automated Student Enrollment & APAAR ID Reconciliation Portal
           </p>
         </div>
 
         {/* Demo Credentials Quick-Select Pill Box */}
-        <div className="mb-6 p-3.5 bg-[#0a1628]/80 border border-amber-500/30 rounded-xl backdrop-blur-md">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-300 mb-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
+        <div className="mb-5 p-3.5 bg-white border border-blue-200/80 rounded-xl shadow-xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800 mb-2">
+            <Sparkles className="w-4 h-4 text-blue-600" />
             <span>Prototype One-Click Access (Select Role):</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => handleQuick('admin')}
-              className="px-2.5 py-1.5 bg-[#12233f] hover:bg-[#183056] border border-amber-500/40 text-amber-200 text-xs font-medium rounded-lg transition text-center"
+              className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition text-center"
             >
               👑 College Admin
             </button>
             <button
               type="button"
               onClick={() => handleQuick('institution_user')}
-              className="px-2.5 py-1.5 bg-[#12233f] hover:bg-[#183056] border border-amber-500/40 text-amber-200 text-xs font-medium rounded-lg transition text-center"
+              className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition text-center"
             >
               🏫 College Staff
             </button>
             <button
               type="button"
               onClick={() => handleQuick('reviewer')}
-              className="px-2.5 py-1.5 bg-[#12233f] hover:bg-[#183056] border border-amber-500/40 text-amber-200 text-xs font-medium rounded-lg transition text-center"
+              className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition text-center"
             >
               🔍 AICTE Reviewer
             </button>
@@ -94,40 +94,40 @@ export const LoginPage: React.FC = () => {
         </div>
 
         {/* Login Form Card */}
-        <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-[#1e3a66] shadow-2xl">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xl">
           <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-lg bg-rose-950/80 border border-rose-800 text-rose-300 text-xs">
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Official Email ID</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Official Email ID</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="admin@college.edu.in"
-                  className="w-full bg-[#081220] border border-[#1b3459] rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  className="w-full bg-slate-50/50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">Password</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Password</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••"
-                  className="w-full bg-[#081220] border border-[#1b3459] rounded-lg pl-9 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  className="w-full bg-slate-50/50 border border-slate-300 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/15 transition"
                 />
               </div>
             </div>
@@ -135,7 +135,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full mt-2 py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-lg shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 text-sm transition disabled:opacity-50"
+              className="w-full mt-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm shadow-blue-500/20 flex items-center justify-center gap-2 text-sm transition disabled:opacity-50"
             >
               <span>{submitting ? 'Verifying...' : 'Sign In to Portal'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -143,10 +143,10 @@ export const LoginPage: React.FC = () => {
 
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800" />
+                <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase">
-                <span className="bg-[#0e1a2f] px-2 text-slate-500 tracking-wider">or sign in with</span>
+                <span className="bg-white px-2 text-slate-400 font-semibold tracking-wider">or sign in with</span>
               </div>
             </div>
 
@@ -154,16 +154,16 @@ export const LoginPage: React.FC = () => {
             <button
               type="button"
               disabled
-              className="w-full py-2 px-3 bg-[#081322] border border-slate-800 text-slate-400 rounded-lg text-xs font-medium flex items-center justify-center gap-2 opacity-70 cursor-not-allowed"
+              className="w-full py-2 px-3 bg-slate-100 border border-slate-200 text-slate-500 rounded-lg text-xs font-medium flex items-center justify-center gap-2 opacity-75 cursor-not-allowed"
             >
-              <KeyRound className="w-3.5 h-3.5 text-amber-500/60" />
+              <KeyRound className="w-3.5 h-3.5 text-blue-600/60" />
               <span>MeriPehchaan (National Govt SSO - Coming Soon)</span>
             </button>
           </form>
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[11px] text-slate-500 mt-6">
+        <p className="text-center text-[11px] text-slate-500 mt-6 font-medium">
           Smart India Hackathon 2026 · AICTE Prototype Portal
         </p>
       </div>

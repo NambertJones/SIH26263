@@ -92,31 +92,31 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Wizard Progress Stepper */}
-      <div className="glass-panel p-4 rounded-xl border border-[#1d3558]">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div className="flex items-center justify-between max-w-3xl mx-auto text-xs">
-          <div className="flex items-center gap-2 text-amber-400 font-bold">
-            <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-xs">
+          <div className="flex items-center gap-2 text-blue-700 font-bold">
+            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
               1
             </span>
             <span>Upload File</span>
           </div>
-          <div className="h-0.5 w-12 bg-slate-700" />
-          <div className="flex items-center gap-2 text-slate-500">
-            <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">
+          <div className="h-0.5 w-12 bg-slate-200" />
+          <div className="flex items-center gap-2 text-slate-400 font-medium">
+            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
               2
             </span>
             <span>Map Columns</span>
           </div>
-          <div className="h-0.5 w-12 bg-slate-700" />
-          <div className="flex items-center gap-2 text-slate-500">
-            <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">
+          <div className="h-0.5 w-12 bg-slate-200" />
+          <div className="flex items-center gap-2 text-slate-400 font-medium">
+            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
               3
             </span>
             <span>Validate & Reconcile</span>
           </div>
-          <div className="h-0.5 w-12 bg-slate-700" />
-          <div className="flex items-center gap-2 text-slate-500">
-            <span className="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center text-xs">
+          <div className="h-0.5 w-12 bg-slate-200" />
+          <div className="flex items-center gap-2 text-slate-400 font-medium">
+            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
               4
             </span>
             <span>Submit</span>
@@ -127,16 +127,16 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
       {/* Main Grid: Upload Area on Left, Checklist on Right */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left: Drag & Drop Zone */}
-        <div className="md:col-span-2 glass-panel p-6 rounded-xl border border-[#1b3459] space-y-6">
+        <div className="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-6">
           <div>
-            <h1 className="text-xl font-bold text-white tracking-wide">Upload Student Admission Data</h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Upload Student Admission Data</h1>
+            <p className="text-xs text-slate-500 mt-1 font-medium">
               Upload institutional admission records (CSV, XLSX) to perform automated APAAR verification and intake reconciliation.
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-300 text-xs rounded-lg flex items-center gap-2">
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-lg flex items-center gap-2 font-medium">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -144,11 +144,11 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
 
           {/* Academic Year Selection */}
           <div className="flex items-center gap-4">
-            <label className="text-xs font-semibold text-slate-300">Admission Academic Year:</label>
+            <label className="text-xs font-semibold text-slate-700">Admission Academic Year:</label>
             <select
               value={academicYear}
               onChange={(e) => setAcademicYear(e.target.value)}
-              className="bg-[#081220] border border-[#1b3459] rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400"
+              className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:bg-white focus:outline-none focus:border-blue-600 font-medium"
             >
               <option value="2025-26">2025-26 (Current Academic Year)</option>
               <option value="2024-25">2024-25</option>
@@ -163,10 +163,10 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
             onDrop={handleDrop}
             className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer ${
               dragActive
-                ? 'border-amber-400 bg-amber-500/10'
+                ? 'border-blue-500 bg-blue-50/50'
                 : file
-                ? 'border-emerald-500/80 bg-emerald-950/20'
-                : 'border-[#1e3a66] hover:border-slate-500 bg-[#081220]/60'
+                ? 'border-emerald-500 bg-emerald-50/40'
+                : 'border-slate-300 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/20'
             }`}
           >
             <input
@@ -177,24 +177,24 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
               className="hidden"
             />
             <label htmlFor="file-upload" className="cursor-pointer block">
-              <div className="w-14 h-14 mx-auto rounded-full bg-[#0d1c33] border border-[#1f3d68] flex items-center justify-center text-amber-400 mb-3 shadow-inner">
-                {file ? <FileSpreadsheet className="w-7 h-7 text-emerald-400" /> : <UploadCloud className="w-7 h-7" />}
+              <div className="w-14 h-14 mx-auto rounded-full bg-white border border-slate-200 flex items-center justify-center text-blue-600 mb-3 shadow-xs">
+                {file ? <FileSpreadsheet className="w-7 h-7 text-emerald-600" /> : <UploadCloud className="w-7 h-7" />}
               </div>
 
               {file ? (
                 <div>
-                  <p className="text-sm font-semibold text-emerald-400">{file.name}</p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-sm font-semibold text-emerald-700">{file.name}</p>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">
                     {(file.size / 1024).toFixed(1)} KB · Ready to map columns
                   </p>
                 </div>
               ) : (
                 <div>
-                  <p className="text-sm font-semibold text-white">
+                  <p className="text-sm font-semibold text-slate-800">
                     Drag and drop your student data file here, or{' '}
-                    <span className="text-amber-400 hover:underline">browse</span>
+                    <span className="text-blue-600 hover:underline">browse</span>
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-400 mt-1 font-medium">
                     Supports .CSV, .XLSX (Max file size: 10MB)
                   </p>
                 </div>
@@ -206,7 +206,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
           <div className="flex items-center justify-between pt-2">
             <button
               onClick={downloadSampleTemplate}
-              className="flex items-center gap-1.5 text-xs text-amber-400 hover:text-amber-300 font-medium py-1.5 px-3 rounded-lg border border-amber-500/30 bg-amber-500/5 transition"
+              className="flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-semibold py-1.5 px-3 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download Sample CSV Template</span>
@@ -215,7 +215,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
             <button
               onClick={handleUpload}
               disabled={!file || uploading}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-lg text-xs shadow-lg shadow-amber-500/20 transition disabled:opacity-40"
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm shadow-blue-500/20 transition disabled:opacity-40 cursor-pointer"
             >
               <span>{uploading ? 'Processing File...' : 'Proceed to Column Mapping'}</span>
               <ArrowRight className="w-4 h-4" />
@@ -224,62 +224,62 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
         </div>
 
         {/* Right: Requirements Checklist */}
-        <div className="glass-panel p-6 rounded-xl border border-[#1b3459] flex flex-col justify-between">
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
           <div>
-            <h2 className="text-sm font-bold text-white tracking-wide mb-3 flex items-center gap-2">
-              <FileCheck className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight mb-3 flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-blue-600" />
               <span>Required Data Schema</span>
             </h2>
 
             <div className="space-y-3 text-xs">
               <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-slate-200">Student Full Name</p>
-                  <p className="text-[11px] text-slate-400">As per official 10th / Aadhaar record</p>
+                  <p className="font-semibold text-slate-800">Student Full Name</p>
+                  <p className="text-[11px] text-slate-500">As per official 10th / Aadhaar record</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-slate-200">APAAR ID (12 Digits)</p>
-                  <p className="text-[11px] text-slate-400">Automated One Nation One Student ID</p>
+                  <p className="font-semibold text-slate-800">APAAR ID (12 Digits)</p>
+                  <p className="text-[11px] text-slate-500">Automated One Nation One Student ID</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-slate-200">Date of Birth</p>
-                  <p className="text-[11px] text-slate-400">YYYY-MM-DD or DD/MM/YYYY format</p>
+                  <p className="font-semibold text-slate-800">Date of Birth</p>
+                  <p className="text-[11px] text-slate-500">YYYY-MM-DD or DD/MM/YYYY format</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-slate-200">Gender & Category</p>
-                  <p className="text-[11px] text-slate-400">Male / Female / Other & Quota</p>
+                  <p className="font-semibold text-slate-800">Gender & Category</p>
+                  <p className="text-[11px] text-slate-500">Male / Female / Other & Quota</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-slate-200">Academic Programme</p>
-                  <p className="text-[11px] text-slate-400">Reconciled against approved AICTE intake</p>
+                  <p className="font-semibold text-slate-800">Academic Programme</p>
+                  <p className="text-[11px] text-slate-500">Reconciled against approved AICTE intake</p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-6 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-            <div className="flex items-center gap-1.5 text-amber-300 text-xs font-semibold mb-1">
-              <ShieldAlert className="w-4 h-4 text-amber-400" />
+          <div className="mt-6 p-3.5 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-center gap-1.5 text-amber-800 text-xs font-bold mb-1">
+              <ShieldAlert className="w-4 h-4 text-amber-600" />
               <span>Duplicate & Intake Rule:</span>
             </div>
-            <p className="text-[11px] text-slate-300 leading-relaxed">
+            <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
               Records will be checked in real-time against cross-institution enrollments and sanctioned intake quotas.
             </p>
           </div>

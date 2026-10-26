@@ -79,30 +79,30 @@ export const IntegrationsPage: React.FC = () => {
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Notice Banner */}
-      <div className="p-4 bg-sky-950/50 border border-sky-800/60 rounded-xl flex items-center justify-between gap-4">
+      <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Sparkles className="w-5 h-5 text-sky-400 shrink-0" />
+          <Sparkles className="w-5 h-5 text-blue-600 shrink-0" />
           <div>
-            <h3 className="text-xs font-bold text-sky-300 uppercase tracking-wide">
+            <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">
               Demo Guardrail Notice: All Integrations Simulated
             </h3>
-            <p className="text-xs text-slate-300 mt-0.5">
+            <p className="text-xs text-slate-600 mt-0.5">
               In accordance with AICTE SIH rules, all external registry connectors simulate government API responses without making live network calls to production databases.
             </p>
           </div>
         </div>
-        <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded bg-sky-900 text-sky-200 border border-sky-700 shrink-0">
+        <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded bg-blue-100 text-blue-800 border border-blue-300 shrink-0">
           Demo Mode
         </span>
       </div>
 
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-white tracking-wide flex items-center gap-2">
-          <Network className="w-5 h-5 text-amber-400" />
+        <h1 className="text-xl font-bold text-slate-900 tracking-wide flex items-center gap-2">
+          <Network className="w-5 h-5 text-blue-600" />
           <span>National Registry Integrations & Connectors</span>
         </h1>
-        <p className="text-xs text-slate-400 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Manage API adapters for APAAR NDEAR, DigiLocker NAD, AICTE Approval, and AISHE databases.
         </p>
       </div>
@@ -112,32 +112,32 @@ export const IntegrationsPage: React.FC = () => {
         {integrations.map((item) => (
           <div
             key={item.id}
-            className="glass-panel p-6 rounded-xl border border-[#1b3459] flex flex-col justify-between hover:border-slate-600 transition space-y-4"
+            className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between hover:border-blue-300 transition space-y-4"
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
                   {item.badge}
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span>Active</span>
                 </span>
               </div>
 
-              <h2 className="text-base font-bold text-white tracking-wide">{item.display_name}</h2>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.description}</p>
+              <h2 className="text-base font-bold text-slate-900 tracking-wide">{item.display_name}</h2>
+              <p className="text-xs text-slate-600 mt-1 leading-relaxed">{item.description}</p>
 
-              <div className="mt-4 p-2.5 bg-[#081220] rounded-lg border border-[#172c4a] text-[11px] text-slate-400 font-mono truncate">
-                Endpoint: <span className="text-sky-300">{item.endpoint}</span>
+              <div className="mt-4 p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-[11px] text-slate-500 font-mono truncate">
+                Endpoint: <span className="text-blue-700 font-semibold">{item.endpoint}</span>
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between border-t border-[#172c4a]">
-              <span className="text-[11px] text-slate-500">Last heartbeat: {item.last_checked}</span>
+            <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+              <span className="text-[11px] text-slate-400">Last heartbeat: {item.last_checked}</span>
               <button
                 onClick={() => openTestModal(item)}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#12233f] hover:bg-[#1a335a] border border-amber-500/40 text-amber-300 font-semibold rounded-lg text-xs transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold rounded-lg text-xs transition cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5" />
                 <span>Test Mock Verification</span>
@@ -155,12 +155,12 @@ export const IntegrationsPage: React.FC = () => {
         maxWidth="xl"
       >
         <div className="space-y-4 text-xs">
-          <p className="text-slate-400">
+          <p className="text-slate-600">
             Execute a mock verification query against the simulated adapter endpoint to verify response schema and validation behavior.
           </p>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">
+            <label className="block font-semibold text-slate-700 mb-1">
               Query Identifier ({selectedService?.service_name === 'apaar' ? 'APAAR ID' : 'Target Code / ID'})
             </label>
             <div className="flex items-center gap-2">
@@ -168,12 +168,12 @@ export const IntegrationsPage: React.FC = () => {
                 type="text"
                 value={testInput}
                 onChange={(e) => setTestInput(e.target.value)}
-                className="flex-1 bg-[#081220] border border-[#1b3459] rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-amber-400"
+                className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 font-mono focus:outline-none focus:border-blue-500 shadow-xs"
               />
               <button
                 onClick={runTest}
                 disabled={testing || !testInput}
-                className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold rounded-lg text-xs shadow-md transition disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition disabled:opacity-50 cursor-pointer"
               >
                 {testing ? 'Testing...' : 'Execute Test'}
               </button>
@@ -184,15 +184,15 @@ export const IntegrationsPage: React.FC = () => {
           {testResponse && (
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
-                  <Code2 className="w-3.5 h-3.5 text-amber-400" />
+                <span className="font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Code2 className="w-3.5 h-3.5 text-blue-600" />
                   <span>Adapter JSON Response (Simulated):</span>
                 </span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
                   HTTP 200 OK
                 </span>
               </div>
-              <pre className="p-3.5 bg-[#060c16] border border-[#1b3459] rounded-xl text-[11px] font-mono text-amber-200 overflow-x-auto max-h-60">
+              <pre className="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-[11px] font-mono text-emerald-300 overflow-x-auto max-h-60">
                 {JSON.stringify(testResponse, null, 2)}
               </pre>
             </div>

@@ -41,22 +41,22 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-[#081220] border-r border-[#192f50] flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none overflow-y-auto">
+    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none overflow-y-auto shadow-xs">
       <div className="py-4">
         {/* Current Institution Info */}
-        <div className="mx-4 mb-4 p-3 bg-[#0d1a30] rounded-lg border border-[#1b355a]">
-          <p className="text-[10px] font-semibold tracking-wider text-amber-400 uppercase">
+        <div className="mx-4 mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200 shadow-xs">
+          <p className="text-[10px] font-bold tracking-wider text-blue-700 uppercase">
             Active Institution
           </p>
-          <p className="text-xs font-medium text-white truncate mt-0.5">
+          <p className="text-xs font-semibold text-slate-800 truncate mt-0.5">
             {user?.institution_name || "St. Joseph's College of Engineering"}
           </p>
-          <p className="text-[11px] text-slate-400 mt-0.5">AICTE ID: 1-1234567B</p>
+          <p className="text-[11px] text-slate-500 mt-0.5 font-medium">AICTE ID: 1-1234567B</p>
         </div>
 
         {/* Navigation Section */}
         <div className="px-3">
-          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
             Platform Workflow
           </p>
           <nav className="space-y-1">
@@ -67,23 +67,23 @@ export const Sidebar: React.FC = () => {
                 className={({ isActive }) =>
                   `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
                     isActive
-                      ? 'bg-gradient-to-r from-amber-500/20 to-amber-500/5 text-amber-300 border-l-2 border-amber-400 font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                      ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600 font-semibold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                   }`
                 }
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-slate-400 group-hover:text-amber-400 transition">
+                  <span className="text-slate-400 group-hover:text-blue-600 transition">
                     {item.icon}
                   </span>
                   <span>{item.name}</span>
                 </div>
                 {item.badge ? (
-                  <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">
+                  <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">
                     {item.badge}
                   </span>
                 ) : (
-                  <span className="text-[10px] text-slate-600 group-hover:text-slate-400 font-mono">
+                  <span className="text-[10px] text-slate-400 group-hover:text-slate-600 font-mono">
                     S{item.screenNo}
                   </span>
                 )}
@@ -94,9 +94,9 @@ export const Sidebar: React.FC = () => {
       </div>
 
       {/* Bottom Footer Info */}
-      <div className="p-4 border-t border-[#162a48] text-center bg-[#070e1a]">
-        <div className="text-[11px] text-slate-400 font-medium">Smart India Hackathon 2026</div>
-        <div className="text-[10px] text-slate-500">Problem Statement: SIH26263</div>
+      <div className="p-4 border-t border-slate-200 text-center bg-slate-50/80">
+        <div className="text-[11px] text-slate-700 font-semibold">Smart India Hackathon 2026</div>
+        <div className="text-[10px] text-slate-500 font-medium">Problem Statement: SIH26263</div>
       </div>
     </aside>
   );
