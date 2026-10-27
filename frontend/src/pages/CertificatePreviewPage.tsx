@@ -1,3 +1,4 @@
+import { maskApaar } from '../lib/privacy';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { certificateApi, studentsApi } from '../api/client';
@@ -80,7 +81,7 @@ export const CertificatePreviewPage: React.FC = () => {
             >
               {studentsList.map((st) => (
                 <option key={st.id} value={st.id} className="bg-white text-slate-800">
-                  {st.name} ({st.apaar_id || 'No APAAR'})
+                  {st.name} ({maskApaar(st.apaar_id) || 'No APAAR'})
                 </option>
               ))}
             </select>
@@ -107,7 +108,7 @@ export const CertificatePreviewPage: React.FC = () => {
         {/* Diagonal Watermark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-5 rotate-[-25deg]">
           <span className="text-8xl font-black uppercase text-slate-900">
-            AICTE OFFICIAL AUTHENTICATED
+            PROTOTYPE · NOT OFFICIAL
           </span>
         </div>
 
@@ -138,7 +139,7 @@ export const CertificatePreviewPage: React.FC = () => {
           </div>
 
           <p className="text-justify text-sm text-slate-700">
-            This is to certify that the student record detailed below has been officially reconciled and validated in accordance with the AICTE Sanctioned Intake Guidelines and authenticated with the National Automated Permanent Academic Account Registry (APAAR / DigiLocker NDEAR Registry).
+            This is to certify that the student record detailed below has passed APAAR ReconX validation and reconciliation against the institution&apos;s AICTE sanctioned intake. APAAR / DigiLocker registry checks are simulated in this prototype.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-xl bg-slate-50 border border-slate-200">
@@ -171,7 +172,7 @@ export const CertificatePreviewPage: React.FC = () => {
             <div>
               <span className="text-slate-500 text-[11px] uppercase font-medium">Date of Birth & Gender</span>
               <p className="text-slate-800 mt-0.5 font-medium">
-                {certData?.student?.dob} · {certData?.student?.gender} ({certData?.student?.category})
+                {certData?.student?.dob} · {certData?.student?.gender}
               </p>
             </div>
 
@@ -189,15 +190,25 @@ export const CertificatePreviewPage: React.FC = () => {
           {/* QR Code Verification Block */}
           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
             <div className="w-14 h-14 bg-white p-1 rounded-lg border border-slate-200 flex items-center justify-center shrink-0">
-              <QrCode className="w-12 h-12 text-slate-900" />
+              {certData?.qr_svg ? (
+                <img src={certData.qr_svg} alt="Verification QR code" className="w-12 h-12" />
+              ) : (
+                <QrCode className="w-12 h-12 text-slate-900" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Digitally Authenticated</span>
+                <span>Scan to verify (prototype)</span>
               </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                Scan QR or visit apaar.aicte-india.org to verify authenticity.
+              <p className="text-[10px] text-slate-500 mt-0.5 break-all">
+                {certData?.verify_url ? (
+                  <a href={certData.verify_url} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">
+                    {certData.verify_url}
+                  </a>
+                ) : (
+                  'Verification link available after preview loads.'
+                )}
               </p>
             </div>
           </div>

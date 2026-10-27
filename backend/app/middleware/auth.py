@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.services.auth_service import decode_access_token
+from app.middleware.tenant import is_aicte_admin
 
 security = HTTPBearer(auto_error=False)
 
@@ -51,7 +52,7 @@ def get_current_user(
 def require_role(allowed_roles: list[str]):
     """Enforce role-based access control (RBAC)."""
     def role_checker(current_user: User = Depends(get_current_user)) -> User:
-        if current_user.role not in allowed_roles and current_user.role != "admin":
+        if current_user.role not in allowed_roles and not is_aicte_admin(current_user):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Requires one of roles: {', '.join(allowed_roles)}",

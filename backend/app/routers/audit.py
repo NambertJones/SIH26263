@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.audit import AuditLog
 from app.middleware.auth import get_current_user
+from app.middleware.tenant import is_central_user
 
 router = APIRouter(prefix="/api/audit", tags=["Audit Logs"])
 
@@ -23,6 +24,11 @@ def list_audit_logs(
 ):
     """Retrieve audit logs."""
     query = db.query(AuditLog)
+
+    if not is_central_user(current_user):
+        # Institution users only see actions performed by users of their own institution
+        own_user_ids = db.query(User.id).filter(User.institution_id == current_user.institution_id)
+        query = query.filter(AuditLog.actor_id.in_(own_user_ids))
 
     if action and action != "all":
         query = query.filter(AuditLog.action == action)

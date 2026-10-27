@@ -1,3 +1,4 @@
+import { maskApaar } from '../lib/privacy';
 import React, { useState, useEffect } from 'react';
 import { reportsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
@@ -203,7 +204,7 @@ export const ReportsPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4 font-semibold text-slate-900">{iss.student_name}</td>
-                    <td className="py-3 px-4 font-mono text-slate-600">{iss.student_apaar_id}</td>
+                    <td className="py-3 px-4 font-mono text-slate-600">{maskApaar(iss.student_apaar_id)}</td>
                     <td className="py-3 px-4 max-w-sm text-slate-700">{iss.description}</td>
                     <td className="py-3 px-4 font-mono text-slate-400">{iss.row_number || '-'}</td>
                     <td className="py-3 px-4 text-center">

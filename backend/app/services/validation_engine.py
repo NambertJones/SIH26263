@@ -5,6 +5,7 @@ import re
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from app.services.privacy import mask_apaar
 from app.models.student import Student
 from app.models.submission import Submission
 from app.models.institution import Programme, Institution
@@ -65,14 +66,40 @@ def validate_submission(db: Session, submission_id: str) -> dict:
             cleaned = s.apaar_id.strip()
             apaar_counts[cleaned] = apaar_counts.get(cleaned, 0) + 1
 
-    # Programme intake limit
+    # Programme intake limit — counted cumulatively across ALL finalized submissions
+    # of this programme, not just this one file (otherwise a college could split
+    # 200 students into two uploads of 100 against a 120-seat programme).
     approved_intake = None
+    permitted_total = None
+    already_enrolled = 0
     programme_name = "Selected Programme"
     if submission.programme_id:
-        prog = db.query(Programme).filter(Programme.id == submission.programme_id).first()
+        prog = db.query(Programme).filter(
+            Programme.id == submission.programme_id,
+            Programme.institution_id == submission.institution_id,
+        ).first()
         if prog:
             approved_intake = prog.approved_intake
+            permitted_total = (
+                (prog.approved_intake or 0)
+                + (prog.supernumerary_seats or 0)
+                + (prog.nri_seats or 0)
+            )
             programme_name = prog.name
+            already_enrolled = (
+                db.query(func.count(Student.id))
+                .outerjoin(Submission, Student.submission_id == Submission.id)
+                .filter(
+                    Student.programme_id == prog.id,
+                    Student.institution_id == submission.institution_id,
+                    Student.is_latest.is_(True),
+                    Student.enrollment_status == "active",
+                    Student.submission_id.is_distinct_from(submission.id),
+                    # records loaded directly, or from submissions that were finalized
+                    (Student.submission_id.is_(None)) | (Submission.status == "submitted"),
+                )
+                .scalar()
+            ) or 0
 
     new_issues: list[ValidationIssue] = []
     student_issues_map: dict[str, list[ValidationIssue]] = {}
@@ -166,16 +193,30 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                     description=f"Date of birth ({s.date_of_birth}) cannot be today or in the future.",
                     row_number=s.row_number,
                 ))
-            elif (today.year - s.date_of_birth.year) < 14:
-                s_issues.append(ValidationIssue(
-                    submission_id=submission.id,
-                    student_id=s.id,
-                    rule_code="FMT_DOB",
-                    severity="warning",
-                    field_name="date_of_birth",
-                    description=f"Candidate age is under 14 years ({s.date_of_birth}). Please verify.",
-                    row_number=s.row_number,
-                ))
+            else:
+                age = today.year - s.date_of_birth.year - (
+                    (today.month, today.day) < (s.date_of_birth.month, s.date_of_birth.day)
+                )
+                if age < 15:
+                    s_issues.append(ValidationIssue(
+                        submission_id=submission.id,
+                        student_id=s.id,
+                        rule_code="FMT_DOB",
+                        severity="error",
+                        field_name="date_of_birth",
+                        description=f"Candidate age is {age} years ({s.date_of_birth}), below the plausible minimum for technical education.",
+                        row_number=s.row_number,
+                    ))
+                elif age < 16:
+                    s_issues.append(ValidationIssue(
+                        submission_id=submission.id,
+                        student_id=s.id,
+                        rule_code="FMT_DOB",
+                        severity="warning",
+                        field_name="date_of_birth",
+                        description=f"Candidate age is {age} years ({s.date_of_birth}). Please verify.",
+                        row_number=s.row_number,
+                    ))
 
         # 6. Enrollment Date Inconsistency
         if s.enrollment_date and s.date_of_birth:
@@ -228,17 +269,24 @@ def validate_submission(db: Session, submission_id: str) -> dict:
         new_issues.extend(s_issues)
         student_issues_map[s.id] = s_issues
 
-    # 9. Intake Capacity Exceeded Check
-    if approved_intake is not None and len(students) > approved_intake:
-        exceeded_by = len(students) - approved_intake
-        for s in students[approved_intake:]:
+    # 9. Intake Capacity Exceeded Check (cumulative across finalized submissions)
+    active_in_file = [s for s in students if (s.enrollment_status or "active") == "active"]
+    if permitted_total is not None and already_enrolled + len(active_in_file) > permitted_total:
+        remaining = max(permitted_total - already_enrolled, 0)
+        total_after = already_enrolled + len(active_in_file)
+        exceeded_by = total_after - permitted_total
+        for s in active_in_file[remaining:]:
             intake_issue = ValidationIssue(
                 submission_id=submission.id,
                 student_id=s.id,
                 rule_code="INTAKE_EXCEED",
                 severity="error",
                 field_name="programme",
-                description=f"Intake exceeded: Programme '{programme_name}' approved intake is {approved_intake}, but submission has {len(students)} students (+{exceeded_by}).",
+                description=(
+                    f"Intake exceeded: '{programme_name}' permits {permitted_total} seats "
+                    f"(approved {approved_intake} + supernumerary/NRI). {already_enrolled} already enrolled, "
+                    f"this file adds {len(active_in_file)} → {total_after} (+{exceeded_by}). Flagged for AICTE review."
+                ),
                 row_number=s.row_number,
             )
             new_issues.append(intake_issue)
@@ -334,7 +382,7 @@ def _create_verification_cases_for_errors(
             submission_id=submission.id,
             institution_id=submission.institution_id,
             issue_type=issue_type,
-            title=f"Verification needed for {s.name} ({s.apaar_id or 'No APAAR'})",
+            title=f"Verification needed for {s.name} ({mask_apaar(s.apaar_id) if s.apaar_id else 'No APAAR'})",
             description=f"{primary_issue.rule_code}: {primary_issue.description}",
             priority=priority,
             status="open",

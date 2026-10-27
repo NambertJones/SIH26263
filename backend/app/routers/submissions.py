@@ -24,6 +24,18 @@ from app.services.audit_service import log_event
 router = APIRouter(prefix="/api/submissions", tags=["Submissions"])
 
 
+def _ensure_own_programme(db: Session, programme_id: str | None, institution_id: str) -> None:
+    """A submission can only be attached to a programme of the same institution."""
+    if not programme_id:
+        return
+    prog = db.query(Programme).filter(Programme.id == programme_id).first()
+    if not prog or prog.institution_id != institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Selected programme does not belong to this institution.",
+        )
+
+
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
@@ -39,6 +51,8 @@ async def upload_file(
             detail="User must belong to an institution to upload data.",
         )
 
+    _ensure_own_programme(db, programme_id, current_user.institution_id)
+
     ext = os.path.splitext(file.filename or "")[1].lower()
     if ext not in settings.ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -47,7 +61,7 @@ async def upload_file(
         )
 
     os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    saved_filename = f"{uuid.uuid4()}_{file.filename}"
+    saved_filename = f"{uuid.uuid4()}_{os.path.basename(file.filename or 'upload')}"
     file_path = os.path.join(settings.UPLOAD_DIR, saved_filename)
 
     content = await file.read()
@@ -215,6 +229,7 @@ def map_columns(
     get_effective_institution_id(current_user, s.institution_id)
 
     if request.programme_id:
+        _ensure_own_programme(db, request.programme_id, s.institution_id)
         s.programme_id = request.programme_id
     if request.academic_year:
         s.academic_year = request.academic_year
@@ -234,7 +249,7 @@ def map_columns(
         dob = None
         if r.get("date_of_birth"):
             try:
-                dob = date_parser.parse(str(r["date_of_birth"])).date()
+                dob = date_parser.parse(str(r["date_of_birth"]), dayfirst=True).date()
             except Exception:
                 dob = None
 
@@ -242,7 +257,7 @@ def map_columns(
         enr_date = None
         if r.get("enrollment_date"):
             try:
-                enr_date = date_parser.parse(str(r["enrollment_date"])).date()
+                enr_date = date_parser.parse(str(r["enrollment_date"]), dayfirst=True).date()
             except Exception:
                 enr_date = None
 

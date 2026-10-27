@@ -14,7 +14,7 @@ from app.schemas.verification import (
     ClarificationRequest,
 )
 from app.middleware.auth import get_current_user
-from app.middleware.tenant import get_effective_institution_id
+from app.middleware.tenant import get_effective_institution_id, require_central_user
 from app.services.case_manager import (
     get_cases,
     assign_case,
@@ -126,6 +126,7 @@ def assign(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
+    require_central_user(current_user)
     get_effective_institution_id(current_user, case.institution_id)
 
     try:
@@ -212,6 +213,7 @@ def resolve(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
+    require_central_user(current_user)
     get_effective_institution_id(current_user, case.institution_id)
 
     updated = resolve_case(db, case_id, current_user.id, request.reason)
@@ -245,6 +247,7 @@ def reject(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
+    require_central_user(current_user)
     get_effective_institution_id(current_user, case.institution_id)
 
     updated = reject_case(db, case_id, current_user.id, request.reason)

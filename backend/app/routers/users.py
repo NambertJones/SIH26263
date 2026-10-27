@@ -8,6 +8,7 @@ from app.models.user import User
 from app.models.institution import Institution
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
 from app.middleware.auth import get_current_user, require_role
+from app.middleware.tenant import is_aicte_admin
 from app.services.auth_service import hash_password
 from app.services.audit_service import log_event
 
@@ -24,8 +25,8 @@ def list_users(
     """List users based on role and permissions."""
     query = db.query(User)
 
-    if current_user.role != "admin":
-        # Non-admins only see users in their institution
+    if not is_aicte_admin(current_user):
+        # College admins / staff / reviewers only see users in their own scope
         if current_user.institution_id:
             query = query.filter(User.institution_id == current_user.institution_id)
         else:
@@ -65,6 +66,13 @@ def create_user(
     db: Session = Depends(get_db),
 ):
     """Create a new user account (Admin only)."""
+    if not is_aicte_admin(current_user):
+        # College admins can only create staff/admins inside their own institution
+        if request.role not in ("institution_user", "admin") or request.institution_id != current_user.institution_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="College administrators can only create users for their own institution.",
+            )
     existing = db.query(User).filter(User.email == request.email.lower().strip()).first()
     if existing:
         raise HTTPException(
@@ -121,6 +129,14 @@ def update_user(
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
 
+    if not is_aicte_admin(current_user):
+        if u.institution_id != current_user.institution_id:
+            raise HTTPException(status_code=403, detail="Cannot modify users of another institution.")
+        if (request.role and request.role not in ("institution_user", "admin")) or (
+            request.institution_id is not None and request.institution_id != current_user.institution_id
+        ):
+            raise HTTPException(status_code=403, detail="College administrators cannot grant AICTE roles or move users.")
+
     if request.name:
         u.name = request.name.strip()
     if request.role:
@@ -168,6 +184,9 @@ def deactivate_user(
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
+
+    if not is_aicte_admin(current_user) and u.institution_id != current_user.institution_id:
+        raise HTTPException(status_code=403, detail="Cannot deactivate users of another institution.")
 
     if u.id == current_user.id:
         raise HTTPException(status_code=400, detail="Cannot deactivate your own account.")

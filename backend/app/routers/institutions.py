@@ -14,6 +14,7 @@ from app.schemas.institution import (
     ProgrammeCreate,
 )
 from app.middleware.auth import get_current_user, require_role
+from app.middleware.tenant import is_aicte_admin
 from app.services.audit_service import log_event
 
 router = APIRouter(prefix="/api/institutions", tags=["Institutions"])
@@ -46,7 +47,7 @@ def update_institution(
     if not inst:
         raise HTTPException(status_code=404, detail="Institution not found")
 
-    if current_user.role != "admin" and current_user.institution_id != inst.id:
+    if not is_aicte_admin(current_user) and current_user.institution_id != inst.id:
         raise HTTPException(status_code=403, detail="Permission denied.")
 
     if request.name:
@@ -96,7 +97,7 @@ def add_programme(
     if not inst:
         raise HTTPException(status_code=404, detail="Institution not found")
 
-    if current_user.role != "admin" and current_user.institution_id != inst.id:
+    if not is_aicte_admin(current_user) and current_user.institution_id != inst.id:
         raise HTTPException(status_code=403, detail="Permission denied.")
 
     prog = Programme(

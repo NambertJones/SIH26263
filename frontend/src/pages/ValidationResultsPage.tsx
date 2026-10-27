@@ -1,3 +1,4 @@
+import { maskApaar } from '../lib/privacy';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { submissionsApi, studentsApi } from '../api/client';
@@ -257,7 +258,7 @@ export const ValidationResultsPage: React.FC = () => {
                     <td className="py-3 px-4 font-mono text-slate-400 font-medium">{st.row_number || '-'}</td>
                     <td className="py-3 px-4 font-semibold text-slate-900">{st.name}</td>
                     <td className="py-3 px-4 font-mono text-blue-700 font-semibold">
-                      {st.apaar_id || <span className="text-rose-600 italic font-sans font-medium">Missing APAAR</span>}
+                      {maskApaar(st.apaar_id) || <span className="text-rose-600 italic font-sans font-medium">Missing APAAR</span>}
                     </td>
                     <td className="py-3 px-4 text-slate-600 font-medium">{st.programme_name || 'CSE'}</td>
                     <td className="py-3 px-4">

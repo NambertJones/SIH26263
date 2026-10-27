@@ -51,54 +51,12 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 // Authentication API
 export const authApi = {
-  login: async (data: { email: string; password: string }) => {
-    try {
-      return await request<{ access_token: string; token_type: string; user: any }>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch {
-      try {
-        const formData = new URLSearchParams();
-        formData.append('username', data.email);
-        formData.append('password', data.password);
-        return await request<{ access_token: string; token_type: string; user: any }>('/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: formData.toString(),
-        });
-      } catch {
-        const role = data.email.includes('admin') ? 'admin' : data.email.includes('officer') ? 'reviewer' : 'institution_user';
-        const mockUser = {
-          id: 'user-demo-1',
-          email: data.email,
-          name: role === 'admin' ? 'Dr. Rajesh Kumar' : role === 'reviewer' ? 'Dr. S. Verma' : 'Priya Nair',
-          role: role,
-          institution_id: 'inst-1',
-          institution_name: 'Delhi Institute of Engineering & Technology',
-        };
-        return {
-          access_token: 'demo-jwt-token-aicte',
-          token_type: 'bearer',
-          user: mockUser,
-        };
-      }
-    }
-  },
-  getMe: async () => {
-    try {
-      return await request<any>('/auth/me');
-    } catch {
-      return {
-        id: 'user-demo-1',
-        email: 'admin@college.edu.in',
-        name: 'Dr. Rajesh Kumar',
-        role: 'admin',
-        institution_id: 'inst-1',
-        institution_name: 'Delhi Institute of Engineering & Technology',
-      };
-    }
-  },
+  login: (data: { email: string; password: string }) =>
+    request<{ access_token: string; token_type: string; user: any }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  getMe: () => request<any>('/auth/me'),
   refresh: () => request<any>('/auth/refresh', { method: 'POST' }),
 };
 
@@ -299,4 +257,10 @@ export const institutionsApi = {
 // Certificate API
 export const certificateApi = {
   getPreview: (studentId: string) => request<any>(`/certificate/${studentId}/preview`),
+};
+
+// Public verification API (no login required)
+export const publicApi = {
+  verify: (certificateId: string) =>
+    request<any>(`/public/verify/${encodeURIComponent(certificateId)}`),
 };

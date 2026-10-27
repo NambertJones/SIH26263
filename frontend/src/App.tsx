@@ -17,6 +17,7 @@ import { IntegrationsPage } from './pages/IntegrationsPage';
 import { UserManagementPage } from './pages/UserManagementPage';
 import { InstitutionSettingsPage } from './pages/InstitutionSettingsPage';
 import { CertificatePreviewPage } from './pages/CertificatePreviewPage';
+import { PublicVerifyPage } from './pages/PublicVerifyPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -42,6 +43,8 @@ export const App: React.FC = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          {/* Public: employers / regulators verify a certificate without logging in */}
+          <Route path="/verify/:certId" element={<PublicVerifyPage />} />
 
           <Route
             path="/"

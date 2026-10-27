@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { casesApi, usersApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
+import { useAuth } from '../contexts/AuthContext';
+import { maskApaar, isCentralUser } from '../lib/privacy';
 import {
   AlertOctagon,
   Search,
@@ -17,6 +19,8 @@ import {
 } from 'lucide-react';
 
 export const VerificationCasesPage: React.FC = () => {
+  const { user } = useAuth();
+  const canDecide = isCentralUser(user);
   const [cases, setCases] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [issueTypeFilter, setIssueTypeFilter] = useState('all');
@@ -256,7 +260,7 @@ export const VerificationCasesPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 font-semibold text-slate-900 max-w-xs truncate">{c.title || c.description}</td>
                     <td className="py-3 px-4 font-medium text-slate-800">{c.student_name || 'N/A'}</td>
-                    <td className="py-3 px-4 font-mono text-blue-700 font-medium">{c.student_apaar_id || 'N/A'}</td>
+                    <td className="py-3 px-4 font-mono text-blue-700 font-medium">{maskApaar(c.student_apaar_id) || 'N/A'}</td>
                     <td className="py-3 px-4 capitalize text-slate-600">{c.issue_type?.replace('_', ' ')}</td>
                     <td className="py-3 px-4">
                       <StatusBadge status={c.status} size="sm" />
@@ -293,7 +297,7 @@ export const VerificationCasesPage: React.FC = () => {
                 <div className="flex items-center gap-4 text-slate-500 mt-2 text-[11px]">
                   <span>Student: <strong className="text-slate-900">{selectedCase.student_name}</strong></span>
                   <span>·</span>
-                  <span>APAAR: <strong className="font-mono text-blue-700 font-semibold">{selectedCase.student_apaar_id || 'N/A'}</strong></span>
+                  <span>APAAR: <strong className="font-mono text-blue-700 font-semibold">{maskApaar(selectedCase.student_apaar_id) || 'N/A'}</strong></span>
                 </div>
               </div>
 
@@ -310,7 +314,8 @@ export const VerificationCasesPage: React.FC = () => {
               )}
             </div>
 
-            {/* Assignment Section */}
+            {/* Assignment Section (AICTE only) */}
+            {canDecide && (
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between gap-4">
               <div className="flex items-center gap-2 text-slate-700 font-medium">
                 <UserCheck className="w-4 h-4 text-blue-600" />
@@ -339,6 +344,7 @@ export const VerificationCasesPage: React.FC = () => {
                 </button>
               </div>
             </div>
+            )}
 
             {/* Event Timeline */}
             <div>
@@ -385,7 +391,18 @@ export const VerificationCasesPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Resolution Rationale & Final Action */}
+            {!canDecide && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 flex items-start gap-2">
+                <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>
+                  This case is decided by an AICTE verification officer. Add your explanation or evidence as a
+                  comment above; your institution cannot approve or reject its own flagged records.
+                </span>
+              </div>
+            )}
+
+            {/* Resolution Rationale & Final Action (AICTE only) */}
+            {canDecide && (
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
               <label className="block font-semibold text-slate-800">
                 Adjudication Rationale / Justification <span className="text-rose-500">*</span>
@@ -430,6 +447,7 @@ export const VerificationCasesPage: React.FC = () => {
                 </div>
               </div>
             </div>
+            )}
           </div>
         )}
       </Modal>

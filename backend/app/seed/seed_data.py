@@ -4,6 +4,7 @@ import random
 from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
 
+from app.services.privacy import mask_apaar
 from app.models.user import User
 from app.models.institution import Institution, Programme
 from app.models.student import Student
@@ -164,7 +165,7 @@ def seed_database(db: Session):
         valid_records=105,
         error_records=7,
         warning_records=3,
-        status="validated",
+        status="submitted",  # finalized earlier — counts towards intake
         submitted_at=datetime.utcnow() - timedelta(days=3),
         validated_at=datetime.utcnow() - timedelta(days=3),
     )
@@ -277,7 +278,7 @@ def seed_database(db: Session):
             submission_id=sub1.id,
             institution_id=inst1.id,
             issue_type=issue_type,
-            title=f"Verification for {st.name} ({st.apaar_id or 'No APAAR'})",
+            title=f"Verification for {st.name} ({mask_apaar(st.apaar_id) if st.apaar_id else 'No APAAR'})",
             description=st.remarks,
             status=case_status,
             assigned_to=officer_user.id if case_status != "open" else None,
