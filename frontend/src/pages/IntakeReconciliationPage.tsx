@@ -60,8 +60,8 @@ export const IntakeReconciliationPage: React.FC = () => {
             Intake Reconciliation
           </h1>
           <p className="text-xs text-slate-600 mt-1 max-w-3xl">
-            Enrolled students compared with each programme&apos;s <strong>demo intake reference</strong> (approved + supernumerary + NRI
-            seats). A difference is a prompt for human review, not a violation: the reference here is synthetic and is not sourced
+            Enrolled students compared with each programme&apos;s <strong>intake reference</strong> (approved + supernumerary + NRI
+            seats). A difference is a prompt for human review, not a violation. Reference figures are entered by institutions and are not yet linked
             from AICTE approval data.
           </p>
         </div>
@@ -151,14 +151,14 @@ export const IntakeReconciliationPage: React.FC = () => {
                                   </tbody>
                                 </table>
                                 <p className="text-[11px] text-slate-500 mt-2">
-                                  OCI and Foreign National seats are not yet separated in this prototype, so they are not counted separately.
+                                  OCI and Foreign National seats are not yet tracked separately.
                                 </p>
                               </div>
                               <div className="p-3 bg-white border border-slate-200 rounded-lg space-y-1.5">
                                 <p className="font-semibold text-slate-800">Source</p>
                                 <p>{r.source}</p>
                                 <p className="text-slate-600">
-                                  Status: <span className="px-1.5 py-0.5 rounded bg-violet-50 border border-violet-200 text-violet-800 font-semibold">Synthetic (demo)</span>
+                                  Status: <span className="px-1.5 py-0.5 rounded bg-violet-50 border border-violet-200 text-violet-800 font-semibold">Institution-entered</span>
                                 </p>
                                 <p className="text-slate-600">Recorded: {formatIST(r.reference_recorded_at)}</p>
                                 <p className="text-slate-600">

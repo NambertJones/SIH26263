@@ -17,7 +17,7 @@ class IntegrationConfig(Base):
     service_name = Column(String(50), nullable=False)  # apaar, digilocker, aicte, aishe
     display_name = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
-    status = Column(String(20), default="demo")  # demo, configured, active, error
+    status = Column(String(20), default="simulated")  # simulated, configured, active, error
     is_mock = Column(Boolean, default=True)
     config = Column(JSON, nullable=True)
     last_checked = Column(DateTime, nullable=True)

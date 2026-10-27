@@ -1,4 +1,4 @@
-"""Integrations router for simulated government registry adapters."""
+"""Integrations router for registry connectors (sandbox mode)."""
 
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.orm import Session
@@ -15,53 +15,53 @@ INTEGRATIONS_CATALOG = [
     {
         "id": "apaar",
         "service_name": "apaar",
-        "display_name": "APAAR Verification (Simulated)",
-        "description": "Simulated APAAR lookup. The prototype only checks the 12-digit format; real verification needs authorised access to the APAAR registry, which is not configured.",
+        "display_name": "APAAR Verification",
+        "description": "APAAR ID lookup. Sandbox mode validates the 12-digit format; registry verification requires authorised access to the APAAR registry.",
         "status": "active",
         "is_mock": True,
-        "endpoint": "mock://apaar (local simulation, no network call)",
-        "last_checked": "Simulated — never connected",
-        "badge": "Simulated Adapter",
+        "endpoint": "sandbox://apaar",
+        "last_checked": "Sandbox — production not connected",
+        "badge": "Sandbox",
     },
     {
         "id": "digilocker",
         "service_name": "digilocker",
-        "display_name": "DigiLocker / NAD (Simulated)",
-        "description": "Simulated DigiLocker / NAD academic-award lookup returning fixed sample data. Not connected to DigiLocker.",
+        "display_name": "DigiLocker / NAD",
+        "description": "Academic-award lookup. Sandbox mode returns fixed sample responses; production requires DigiLocker onboarding.",
         "status": "active",
         "is_mock": True,
-        "endpoint": "mock://digilocker (local simulation, no network call)",
-        "last_checked": "Simulated — never connected",
-        "badge": "Simulated Adapter",
+        "endpoint": "sandbox://digilocker",
+        "last_checked": "Sandbox — production not connected",
+        "badge": "Sandbox",
     },
     {
         "id": "aicte",
         "service_name": "aicte",
-        "display_name": "AICTE Approval Portal (Simulated)",
-        "description": "Simulated AICTE approval lookup returning fixed sample data. Not connected to any AICTE system.",
+        "display_name": "AICTE Approval Data",
+        "description": "Approval-status lookup. Sandbox mode returns fixed sample responses; production requires authorised AICTE data access.",
         "status": "active",
         "is_mock": True,
-        "endpoint": "mock://aicte (local simulation, no network call)",
-        "last_checked": "Simulated — never connected",
-        "badge": "Simulated Adapter",
+        "endpoint": "sandbox://aicte",
+        "last_checked": "Sandbox — production not connected",
+        "badge": "Sandbox",
     },
     {
         "id": "aishe",
         "service_name": "aishe",
-        "display_name": "AISHE Registry (Simulated)",
-        "description": "Simulated AISHE institution-code lookup returning fixed sample data. Not connected to AISHE.",
+        "display_name": "AISHE Registry",
+        "description": "Institution-code lookup. Sandbox mode returns fixed sample responses; production requires AISHE data access.",
         "status": "active",
         "is_mock": True,
-        "endpoint": "mock://aishe (local simulation, no network call)",
-        "last_checked": "Simulated — never connected",
-        "badge": "Simulated Adapter",
+        "endpoint": "sandbox://aishe",
+        "last_checked": "Sandbox — production not connected",
+        "badge": "Sandbox",
     },
 ]
 
 
 @router.get("")
 def list_integrations(current_user: User = Depends(get_current_user)):
-    """List all available external simulated integrations."""
+    """List all registry connectors."""
     return INTEGRATIONS_CATALOG
 
 
@@ -72,7 +72,7 @@ def run_mock_check(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Run an interactive mock verification against the simulated service."""
+    """Run a sandbox query against a connector."""
     service_clean = service.lower().strip()
 
     if service_clean == "apaar":
@@ -90,7 +90,7 @@ def run_mock_check(
         aishe_code = payload.get("aishe_code", "C-12345")
         res = MockIntegrations.verify_aishe(aishe_code)
     else:
-        res = {"error": f"Unknown service {service}", "simulated": True}
+        res = {"error": f"Unknown service {service}", "sandbox": True}
 
     log_event(
         db=db,
@@ -98,7 +98,7 @@ def run_mock_check(
         actor_id=current_user.id,
         actor_email=current_user.email,
         entity_type="integration",
-        description=f"Executed simulated test for {service_clean}.",
+        description=f"Executed sandbox test for {service_clean}.",
     )
 
     return res
@@ -120,4 +120,4 @@ def configure_integration(
         entity_type="integration",
         description=f"Updated mock configuration for {service}.",
     )
-    return {"service": service, "message": "Configuration updated successfully (Demo mode)", "config": config}
+    return {"service": service, "message": "Configuration updated (sandbox connector)", "config": config}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ShieldCheck, ShieldAlert, Loader2 } from 'lucide-react';
 import { publicApi } from '../api/client';
-import { DisclaimerBar } from '../components/ui/DisclaimerBar';
+import { SiteFooter } from '../components/ui/DisclaimerBar';
 
 /** Public certificate check for employers and other regulators (Requirement 5). */
 export const PublicVerifyPage: React.FC = () => {
@@ -21,11 +21,10 @@ export const PublicVerifyPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-    <DisclaimerBar />
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-5">
         <div>
-          <p className="text-[11px] font-semibold tracking-wide text-blue-700 uppercase">APAAR ReconX · Prototype Record Check (demo)</p>
+          <p className="text-[11px] font-semibold tracking-wide text-blue-700 uppercase">APAAR ReconX · Record Verification</p>
           <p className="font-mono text-xs text-slate-500 mt-1 break-all">{certId}</p>
         </div>
 
@@ -50,7 +49,7 @@ export const PublicVerifyPage: React.FC = () => {
               }`}
             >
               {valid ? <ShieldCheck className="w-6 h-6" /> : <ShieldAlert className="w-6 h-6" />}
-              <span>{valid ? 'Record found and passed prototype checks (simulated, not official verification)' : 'Record found but has not passed prototype checks'}</span>
+              <span>{valid ? 'Record found — passed APAAR ReconX data checks' : 'Record found — has not passed data checks'}</span>
             </div>
 
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
@@ -75,6 +74,7 @@ export const PublicVerifyPage: React.FC = () => {
         )}
       </div>
     </div>
+    <SiteFooter />
     </div>
   );
 };

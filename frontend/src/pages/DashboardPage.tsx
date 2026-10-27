@@ -83,7 +83,7 @@ export const DashboardPage: React.FC = () => {
             <span>Student Enrollment & Reconciliation Overview</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Data-quality checks, intake comparison and discrepancy tracking on synthetic demo data. APAAR checks are format-only.
+            Data-quality checks, intake comparison and discrepancy tracking. APAAR ID checks validate the format.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export const DashboardPage: React.FC = () => {
               Data as of <strong>{loadedAt}</strong>
             </span>
             <span className="block text-slate-600">
-              Scope: {central ? 'all demo institutions' : user?.institution_name} · Academic year 2025-26 · Demo data
+              Scope: {central ? 'all institutions' : user?.institution_name} · Academic year 2025-26
             </span>
           </div>
 
@@ -124,7 +124,7 @@ export const DashboardPage: React.FC = () => {
           title="Records Passing Checks"
           to="/students?status=valid"
           value={stats?.valid_records || 0}
-          subtitle={`${validPct}% passing all prototype checks`}
+          subtitle={`${validPct}% passing all data checks`}
           icon={<CheckCircle className="w-5 h-5 text-emerald-600" />}
           trend={`${validPct}% passing`}
           trendType="positive"
@@ -172,7 +172,7 @@ export const DashboardPage: React.FC = () => {
           title="Intake Needing Review"
           to="/intake"
           value={intakeReview ?? 0}
-          subtitle="Programmes with enrolled count above the demo reference"
+          subtitle="Programmes with enrolled count above the intake reference"
           icon={<TrendingUp className="w-5 h-5 text-amber-600" aria-hidden="true" />}
         />
       </div>
@@ -184,10 +184,10 @@ export const DashboardPage: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                Enrolment by Programme vs Demo Intake Reference
+                Enrolment by Programme vs Intake Reference
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Enrolled count compared with the synthetic intake reference for each programme
+                Enrolled count compared with the intake reference for each programme
               </p>
             </div>
             <button

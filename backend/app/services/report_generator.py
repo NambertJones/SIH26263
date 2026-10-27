@@ -255,8 +255,8 @@ def get_intake_reconciliation(db: Session, institution_id: str | None = None) ->
             "difference": enrolled - reference_total,
             "counted_statuses": INTAKE_COUNTED_STATUSES,
             "outcome": outcome,
-            "source": (ref.source if ref and ref.source else "Programme record (synthetic demo data)"),
-            "source_status": "SYNTHETIC",
+            "source": (ref.source if ref and ref.source else "Programme record (institution-entered)"),
+            "source_status": "INSTITUTION_ENTERED",
             "reference_recorded_at": (ref.created_at.isoformat() if ref and ref.created_at else (p.created_at.isoformat() if p.created_at else None)),
             "open_intake_cases": open_cases,
         })

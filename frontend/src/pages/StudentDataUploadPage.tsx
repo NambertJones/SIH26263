@@ -84,7 +84,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'ReconX_Student_Template_SYNTHETIC_DEMO.csv');
+    link.setAttribute('download', 'ReconX_Student_Template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -179,7 +179,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
               className="flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-semibold py-1.5 px-3 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Sample CSV (synthetic test data)</span>
+              <span>Download CSV Template</span>
             </button>
 
             <button
@@ -238,7 +238,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800">Academic Programme</p>
-                  <p className="text-[11px] text-slate-500">Compared with the demo intake reference</p>
+                  <p className="text-[11px] text-slate-500">Compared with the intake reference</p>
                 </div>
               </div>
             </div>
@@ -250,7 +250,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
               <span>Duplicate & Intake Rule:</span>
             </div>
             <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-              Records are checked for possible duplicates (within and across institutions) and compared with the demo intake reference. Flags need human review.
+              Records are checked for possible duplicates (within and across institutions) and compared with the intake reference. Flags need human review.
             </p>
           </div>
         </div>

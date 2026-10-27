@@ -106,7 +106,6 @@ if os.path.exists(FRONTEND_DIST) and os.path.isdir(FRONTEND_DIST):
             "app": settings.APP_NAME,
             "version": settings.APP_VERSION,
             "status": "online",
-            "demo_mode": True,
         }
 
     @app.get("/{full_path:path}")
@@ -128,7 +127,6 @@ if os.path.exists(FRONTEND_DIST) and os.path.isdir(FRONTEND_DIST):
             "app": settings.APP_NAME,
             "version": settings.APP_VERSION,
             "status": "online",
-            "demo_mode": True,
         }
 else:
     @app.get("/")
@@ -138,7 +136,6 @@ else:
             "app": settings.APP_NAME,
             "version": settings.APP_VERSION,
             "status": "online",
-            "demo_mode": True,
             "docs_url": "/docs",
         }
 

@@ -80,7 +80,7 @@ export const StudentRecordsListPage: React.FC = () => {
             <span>Student Records</span>
           </h1>
           <p className="text-xs text-slate-600 mt-1">
-            Synthetic student records with data-check status. APAAR IDs are masked; status shows the format check only, not identity
+            Student records with data-check status. APAAR IDs are masked; status shows the format check only, not identity
             verification.
           </p>
         </div>

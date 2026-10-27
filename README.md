@@ -7,13 +7,13 @@
 
 ## 🌟 Executive Summary
 
-> **Independent prototype for demonstration. Not an official AICTE or APAAR portal. Uses synthetic data and simulated verification.** It is not affiliated with, endorsed by or developed for AICTE, the Ministry of Education, APAAR, DigiLocker or AISHE.
+> **Independent working prototype. Not an official AICTE or APAAR portal. Uses synthetic data; external registry checks are simulated.** It is not affiliated with, endorsed by or developed for AICTE, the Ministry of Education, APAAR, DigiLocker or AISHE.
 
 **APAAR ReconX** is a hackathon prototype for the SIH26263 problem statement (student data management and verification for AICTE-approved institutions, keyed on the APAAR ID). Its features:
 1. **Automated Data Checks**: APAAR ID format check (12 digits — format only, not identity verification), duplicate checks within a file, and flags for possible duplicate enrolments across institutions for human review.
-2. **Intake Reconciliation**: Compares enrolled counts with a demo intake reference per programme and flags potential discrepancies for review (it does not enforce quotas).
+2. **Intake Reconciliation**: Compares enrolled counts with an intake reference per programme and flags potential discrepancies for review (it does not enforce quotas).
 3. **Audited Correction Workflow**: Immutable versioning preserves every historical change with mandatory justification rationale.
-4. **Review Queue**: Case management for oversight reviewers (demo role) with chronological event timelines.
+4. **Review Queue**: Case management for oversight reviewers with chronological event timelines.
 5. **Simulated Registry Connectors**: Local mock adapters standing in for APAAR, DigiLocker / NAD, AICTE approval and AISHE lookups. No government system is connected.
 6. **Reports & Prototype Records**: Exportable discrepancy lists, a data-quality summary (counts only, no compliance score), and QR-coded prototype enrolment records marked "not an official document".
 
@@ -23,28 +23,28 @@
 
 | Screen # | Screen Name | Route | Core Functionality |
 |---|---|---|---|
-| **Screen 1** | **Login Portal** | `/login` | Prototype login with disclaimer and 1-click demo role switcher (Admin, Staff, Oversight Reviewer) |
+| **Screen 1** | **Login Portal** | `/login` | Prototype login with disclaimer and 1-click role switcher for the synthetic accounts (Admin, Staff, Oversight Reviewer) |
 | **Screen 2** | **Institution Dashboard** | `/dashboard` | 4 metric stat cards, Enrollment vs Intake capacity bars, status donut chart, recent audit feed |
 | **Screen 3** | **Student Data Upload** | `/upload` | 4-step wizard, drag-and-drop CSV/XLSX upload, schema checklist, downloadable test CSV template |
 | **Screen 4** | **Column Mapping** | `/mapping` | Auto-detected header matching, schema dropdown selectors, live 3-row sample preview |
 | **Screen 5** | **Validation Results** | `/validation` | Real-time deterministic rule engine results, severity tabs, APAAR format & duplicate counters, batch finalization |
 | **Screen 6** | **Student Record Details** | `/students/:id` | Student profile, cross-institution duplicate alert banner, issue breakdown, audit version history, correction modal |
 | **Screen 7** | **Verification Cases** | `/cases` | Adjudication queue, priority badges (Critical, High, Medium), timeline comments, assign, resolve & reject |
-| **Screen 8** | **Reports & Analytics** | `/reports` | Demo intake reference vs enrolled table, discrepancy list, data-quality summary (counts only), CSV export |
+| **Screen 8** | **Reports & Analytics** | `/reports` | Intake reference vs enrolled table, discrepancy list, data-quality summary (counts only), CSV export |
 | **Screen 9** | **External Integrations** | `/integrations` | APAAR, DigiLocker, AICTE, AISHE mock adapter cards with a simulated test modal (results labelled SIMULATED) |
 | **Screen 10** | **User Management** | `/users` | Role-based access control (RBAC), multi-tab user directory, new account creation modal |
-| **Screen 11** | **Institution Settings** | `/settings` | Demo institution profile, programme intake reference (synthetic), demo calendar dates, security notes |
+| **Screen 11** | **Institution Settings** | `/settings` | Institution profile, programme intake reference (synthetic), admission calendar dates, security notes |
 | **Screen 12** | **Certificate Preview** | `/certificate` | Prototype enrolment record (marked not an official document), QR link to the prototype record check, PDF print layout |
 
 ---
 
-## 👥 Demo Access Credentials
+## 👥 Synthetic Access Accounts
 
 | Role | Email | Password | Access Scope |
 |---|---|---|---|
 | **College Administrator** | `admin@college.edu.in` | `admin123` | Institutional uploads, settings, staff management, compliance |
 | **Admissions Staff** | `staff@college.edu.in` | `staff123` | Batch upload, column mapping, record correction |
-| **Oversight Reviewer (demo)** | `officer1@aicte.gov.in` | `officer123` | Central review queue, cross-institutional dispute adjudication, compliance |
+| **Oversight Reviewer** | `officer1@aicte.gov.in` | `officer123` | Central review queue, cross-institutional dispute adjudication, compliance |
 
 *Note: You can also use the one-click quick-login buttons on the login screen or in the top navigation bar to switch roles instantly.*
 
@@ -118,8 +118,8 @@ npm run dev
 |---|---|
 | College Admin (`admin` + institution) | Own institution only: data, settings, staff accounts |
 | Admissions Staff (`institution_user`) | Own institution only: upload, map, correct records, comment on cases |
-| Oversight Reviewer, demo (`reviewer`) | All institutions; **only role that can assign, resolve or reject verification cases** |
-| Oversight Admin, demo (`admin`, no institution) | Platform-wide administration |
+| Oversight Reviewer (`reviewer`) | All institutions; **only role that can assign, resolve or reject verification cases** |
+| Oversight Admin (`admin`, no institution) | Platform-wide administration |
 
 - APAAR IDs are masked (`1234-****-9012`) in list views, case queues and reports; the full ID is shown only on the authorised record detail page and on the certificate.
 - Certificate QR codes carry only the certificate number. `GET /api/public/verify/{certificate_id}` (UI: `/verify/:id`) lets employers/regulators verify without logging in and returns only masked APAAR, name, institution, programme and status.
@@ -161,5 +161,5 @@ FastAPI automatically serves `frontend/dist` for all web pages and mounts all `/
 ---
 
 ## 📄 License & Attribution
-Developed for the **Smart India Hackathon 2026** (Problem Statement: SIH26263). All government registry adapters (APAAR, DigiLocker, AICTE, AISHE) are mock interfaces for demonstration purposes.
+Developed for the **Smart India Hackathon 2026** (Problem Statement: SIH26263). All government registry adapters (APAAR, DigiLocker, AICTE, AISHE) are simulated interfaces; no government system is contacted.
 

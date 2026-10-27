@@ -59,10 +59,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggleCollapsed, 
   const scopeCard = (
     <div className="mx-4 mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200">
       <p className="text-[11px] font-bold tracking-wider text-blue-800 uppercase">
-        {central ? 'Oversight scope (demo)' : 'Institution scope'}
+        {central ? 'Oversight scope' : 'Institution scope'}
       </p>
       <p className="text-xs font-semibold text-slate-800 truncate mt-0.5" title={user?.institution_name}>
-        {central ? 'All demo institutions' : user?.institution_name || 'Institution'}
+        {central ? 'All institutions' : user?.institution_name || 'Institution'}
       </p>
     </div>
   );

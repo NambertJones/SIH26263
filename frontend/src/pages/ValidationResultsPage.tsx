@@ -176,7 +176,7 @@ export const ValidationResultsPage: React.FC = () => {
         <StatCard
           title="Valid Records"
           value={submission?.valid_records || 0}
-          subtitle="Passed all prototype checks (format, duplicates, intake)"
+          subtitle="Passed all data checks (format, duplicates, intake)"
           icon={<CheckCircle2 className="w-5 h-5 text-emerald-600" />}
           colorBorder="border-emerald-100"
         />

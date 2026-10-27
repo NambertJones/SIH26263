@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ShieldCheck, Lock, Mail, ArrowRight, KeyRound, Sparkles, Building2, School, SearchCheck } from 'lucide-react';
-import { DisclaimerBar, DISCLAIMER_TEXT } from '../components/ui/DisclaimerBar';
+import { SiteFooter } from '../components/ui/DisclaimerBar';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('admin@college.edu.in');
@@ -41,7 +41,6 @@ export const LoginPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-    <DisclaimerBar />
     <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background radial glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -58,18 +57,18 @@ export const LoginPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1">APAAR ReconX</h1>
           <p className="text-xs text-blue-700 font-bold uppercase tracking-widest mb-1">
-            Independent prototype · SIH26263
+            Student Data Verification Platform
           </p>
           <p className="text-xs text-slate-500">
-            Student enrolment data validation & reconciliation prototype
+            Enrolment data validation & reconciliation for higher-education institutions
           </p>
         </div>
 
-        {/* Demo Credentials Quick-Select Pill Box */}
+        {/* Quick sign-in */}
         <div className="mb-5 p-3.5 bg-white border border-blue-200/80 rounded-xl shadow-xs">
           <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800 mb-2">
             <Sparkles className="w-4 h-4 text-blue-600" />
-            <span>Demo accounts (synthetic data) — select a role:</span>
+            <span>Quick sign-in:</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button
@@ -153,25 +152,22 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Government SSO is a roadmap item: needs official onboarding, not available in the prototype */}
+            {/* Government SSO is a roadmap item: needs official onboarding */}
             <button
               type="button"
               disabled
-              title="Not available in this prototype — requires official government SSO onboarding"
+              title="Coming soon — requires government SSO onboarding"
               className="w-full py-2 px-3 bg-slate-100 border border-slate-200 text-slate-500 rounded-lg text-xs font-medium flex items-center justify-center gap-2 opacity-75 cursor-not-allowed"
             >
               <KeyRound className="w-3.5 h-3.5 text-blue-600/60" />
-              <span>Government SSO — not available in prototype (requires official onboarding)</span>
+              <span>Government SSO — coming soon</span>
             </button>
           </form>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-[11px] text-slate-500 mt-6 font-medium">
-          Smart India Hackathon 2026 · SIH26263 · {DISCLAIMER_TEXT}
-        </p>
       </div>
     </div>
+    <SiteFooter />
     </div>
   );
 };

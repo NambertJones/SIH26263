@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
-import { DisclaimerBar } from '../ui/DisclaimerBar';
+import { SiteFooter } from '../ui/DisclaimerBar';
 import { Forbidden } from '../ui/States';
 import { useAuth } from '../../contexts/AuthContext';
 import { canAccess, routeMeta } from '../../lib/navigation';
@@ -19,7 +19,7 @@ export const DashboardLayout: React.FC = () => {
   const allowed = canAccess(user, pathname);
 
   useEffect(() => {
-    document.title = `${meta.title} · APAAR ReconX (prototype)`;
+    document.title = `${meta.title} · APAAR ReconX`;
   }, [meta.title]);
 
   const toggleCollapsed = () => {
@@ -37,7 +37,6 @@ export const DashboardLayout: React.FC = () => {
       >
         Skip to main content
       </a>
-      <DisclaimerBar />
       <Header onOpenMenu={() => setMobileOpen(true)} />
       <div className="flex flex-1 min-w-0">
         <Sidebar
@@ -75,6 +74,7 @@ export const DashboardLayout: React.FC = () => {
           {allowed ? <Outlet /> : <Forbidden />}
         </main>
       </div>
+      <SiteFooter />
     </div>
   );
 };

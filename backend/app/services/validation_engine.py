@@ -283,7 +283,7 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                 severity="error",
                 field_name="programme",
                 description=(
-                    f"Potential intake discrepancy — review required: demo intake reference for '{programme_name}' is "
+                    f"Potential intake discrepancy — review required: intake reference for '{programme_name}' is "
                     f"{permitted_total} seats (reference {approved_intake} + supernumerary/NRI). {already_enrolled} already enrolled, "
                     f"this file adds {len(active_in_file)} → {total_after} (+{exceeded_by}). Flagged for oversight review."
                 ),

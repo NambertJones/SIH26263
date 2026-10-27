@@ -94,7 +94,7 @@ export const UserManagementPage: React.FC = () => {
             <span>Role-Based User Management & Access Control</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Manage demo institution users and oversight reviewers.
+            Manage institution users and oversight reviewers.
           </p>
         </div>
 
@@ -256,7 +256,7 @@ export const UserManagementPage: React.FC = () => {
               >
                 <option value="institution_user">College Staff</option>
                 <option value="admin">College Admin</option>
-                <option value="reviewer">Oversight Reviewer (demo)</option>
+                <option value="reviewer">Oversight Reviewer</option>
               </select>
             </div>
 

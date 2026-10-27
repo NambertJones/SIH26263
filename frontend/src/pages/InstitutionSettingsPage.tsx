@@ -121,10 +121,10 @@ export const InstitutionSettingsPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-wide flex items-center gap-2">
           <Building2 className="w-5 h-5 text-blue-600" />
-          <span>Institution Profile & Intake Reference (Demo)</span>
+          <span>Institution Profile & Intake Reference</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Manage the demo institution profile, programmes and intake reference figures. All values are synthetic.
+          Manage the institution profile, programmes and intake reference figures.
         </p>
       </div>
 
@@ -165,7 +165,7 @@ export const InstitutionSettingsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  AICTE Institute ID (synthetic demo value)
+                  AICTE Institute ID
                 </label>
                 <input
                   type="text"
@@ -247,7 +247,7 @@ export const InstitutionSettingsPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-500">
-              Demo intake reference figures used by the reconciliation checks. Not sourced from AICTE approval data.
+              Intake reference figures used by the reconciliation checks. Entered by the institution; not yet verified against AICTE approval data.
             </p>
             <button
               onClick={() => setProgModalOpen(true)}
@@ -264,10 +264,10 @@ export const InstitutionSettingsPage: React.FC = () => {
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
                   <th className="py-3 px-4 font-semibold">Code</th>
                   <th className="py-3 px-4 font-semibold">Programme Name</th>
-                  <th className="py-3 px-4 font-semibold text-right">Intake Reference (demo)</th>
+                  <th className="py-3 px-4 font-semibold text-right">Intake Reference</th>
                   <th className="py-3 px-4 font-semibold text-right">Supernumerary (TFW)</th>
                   <th className="py-3 px-4 font-semibold text-right">NRI Quota</th>
-                  <th className="py-3 px-4 font-semibold text-right">Total (demo)</th>
+                  <th className="py-3 px-4 font-semibold text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -292,7 +292,7 @@ export const InstitutionSettingsPage: React.FC = () => {
       {/* Tab 3: Calendar */}
       {activeTab === 'calendar' && (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 text-xs">
-          <h3 className="text-sm font-bold text-slate-900 mb-2">Admission Cycle Dates (demo values, not official deadlines)</h3>
+          <h3 className="text-sm font-bold text-slate-900 mb-2">Admission Cycle Dates (configured values, not official deadlines)</h3>
           <div className="space-y-3">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
               <div>
@@ -321,7 +321,7 @@ export const InstitutionSettingsPage: React.FC = () => {
             <div>
               <p className="font-semibold text-slate-900">APAAR / identity verification</p>
               <p className="text-[11px] text-slate-500">
-                Not connected. The prototype only checks APAAR ID format (12 digits); real verification needs authorised registry access.
+                Not connected. APAAR IDs are format-validated (12 digits); registry verification requires authorised access to the APAAR registry.
               </p>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300 font-bold">
@@ -369,7 +369,7 @@ export const InstitutionSettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Intake Reference Seats (demo)</label>
+            <label className="block font-semibold text-slate-700 mb-1">Intake Reference Seats</label>
             <input
               type="number"
               required

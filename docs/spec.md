@@ -51,9 +51,9 @@ A working prototype already exists at the repository root (`backend/` FastAPI + 
 | C8 | Access token in `localStorage` | httpOnly cookie session + CSRF (§18.1). | P0 |
 | C9 | Three roles (Admin, Staff, Officer) | Map to §6 roles: College Administrator → Institution Admin; Admissions Staff → Data Operator; AICTE Verification Officer → Oversight Officer (demo). Add Auditor, System Admin, Student (demo), Verifier. | P0 (map) / P1 (new roles) |
 | C10 | No automated tests | Add `backend/tests/` with pytest; P0 test list in §19. | P0 |
-| C11 | Integrations page shows "live query testing" against APAAR/DigiLocker/AICTE/AISHE | All connectors show `DEMO_MOCK` or `NOT_CONFIGURED` (Appendix A.9); results stamped SIMULATED. | P0 |
+| C11 | Integrations page shows "live query testing" against APAAR/DigiLocker/AICTE/AISHE | All connectors show `SIMULATED` or `NOT_CONFIGURED` (Appendix A.9); results stamped SIMULATED. | P0 |
 | C12 | README "Validates APAAR formats (12 digits)" without provenance | Keep the rule; cite source in `docs/source-register.md`; UI label "Format check only". | P0 |
-| C13 | SQLite in dev, Postgres optional | Keep SQLite for local demo if it works; PostgreSQL in docker-compose/deploy. All SQL must be portable (no SQLite-only types). | P2 |
+| C13 | SQLite in dev, Postgres optional | Keep SQLite for local development if it works; PostgreSQL in docker-compose/deploy. All SQL must be portable (no SQLite-only types). | P2 |
 
 Existing pages to keep and adapt: Login, Dashboard, Student Data Upload, Column Mapping, Validation Results, Student Records List, Student Record Details, Verification Cases, Reports, Integrations, User Management, Institution Settings, Certificate Preview, Public Verify.
 
@@ -63,7 +63,7 @@ File paths are relative to `frontend/src/`. Re-verify each item before changing 
 
 | # | Where | Finding | Required change | P |
 |---|---|---|---|---|
-| U1 | `components/layout/Header.tsx` | Subtitle "AICTE Student Verification Platform"; no disclaimer; "Simulated Government Adapters Active" pill is the only demo signal | Subtitle "Independent prototype"; add the global disclaimer bar and the `DEMO MODE` chip (§17.2) | P0 |
+| U1 | `components/layout/Header.tsx` | Subtitle "AICTE Student Verification Platform"; no disclaimer; "Simulated Government Adapters Active" pill is the only demo signal | Subtitle "Independent prototype"; add the global disclaimer bar and the `SYNTHETIC DATA` chip (§17.2) | P0 |
 | U2 | `Header.tsx`, `contexts/AuthContext.tsx` | One-click role switcher logs in with **hardcoded passwords shipped in the JS bundle** (`admin123`, `staff123`, `officer123`) | Show the switcher only when the backend reports `PUBLIC_DEMO=false` and `ENV=development`; backend issues demo sessions through a dev-only endpoint; no passwords in frontend code | P0 |
 | U3 | `pages/LoginPage.tsx` | Emoji role icons ("🔍 AICTE Reviewer"); "Official Email ID"; footer "AICTE Prototype Portal"; disabled Parichay/MeriPehchaan SSO button with no reason | Lucide icons; "Email"; footer with disclaimer; SSO button shows "Not available in prototype — requires government SSO onboarding" | P0 |
 | U4 | `pages/ReportsPage.tsx` | "AICTE Compliance Rating" tab with score out of 100; status **defaults to `COMPLIANT` when data is missing**; "APAAR ID Biometric Linkage Compliance … authenticated with NDEAR registry" | Remove the tab and score (C3). Replace with traceable counts. Remove every biometric/NDEAR authentication claim | P0 |
@@ -182,12 +182,12 @@ RBAC and tenant scoping are enforced **server-side**. Identity, role and institu
 | Role | Scope | Priority |
 |---|---|---|
 | `SYSTEM_ADMIN` | Accounts, roles, connectors, reference data, settings. No personal-record access by default. | P1 |
-| `OVERSIGHT_OFFICER` (demo stand-in for a regulator user) | Cross-institution summaries and cases; every sensitive read audited. | P0 |
+| `OVERSIGHT_OFFICER` (stand-in for a regulator user) | Cross-institution summaries and cases; every sensitive read audited. | P0 |
 | `INSTITUTION_ADMIN` | Own institution: users, records, imports, cases, reports, API keys. | P0 |
 | `DATA_OPERATOR` | Own institution: upload, validate, correct permitted fields. | P0 |
 | `AUDITOR` | Read-only: records, cases, decisions, provenance, audit log, within assigned scope. | P1 |
-| `STUDENT` (demo) | Own record, consent grants/revocations, own certificate. | P1 |
-| `VERIFIER` (employer / other regulator, demo) | Verify a record only via a student-issued consent token; sees minimal attested fields. | P1 |
+| `STUDENT` | Own record, consent grants/revocations, own certificate. | P1 |
+| `VERIFIER` (employer / other regulator) | Verify a record only via a student-issued consent token; sees minimal attested fields. | P1 |
 
 Permission matrix (✔ allowed, ○ own scope only, ✖ denied, M masked only):
 
@@ -229,7 +229,7 @@ Each journey lists its priority. Status names come from Appendix A.
 
 **F. Reports and audit (P1; audit view P0).** Filtered reports with generation time, filters, source freshness, `DataMode`, caveats. Exports masked by default; unmasked requires permission + reason. Audit view: searchable chronological events.
 
-**G. Student consent (P1; consent record P0).** Student (demo login) sees their record, which institutions hold it, and active consent grants. They can grant a verifier time-limited access to a defined field set, receive a verification token / QR, and revoke it. For P0, consent is captured at import as a per-record `ConsentStatus` field with source (e.g. "institution attests consent collected on <date>").
+**G. Student consent (P1; consent record P0).** Student (synthetic account) sees their record, which institutions hold it, and active consent grants. They can grant a verifier time-limited access to a defined field set, receive a verification token / QR, and revoke it. For P0, consent is captured at import as a per-record `ConsentStatus` field with source (e.g. "institution attests consent collected on <date>").
 
 **H. Third-party verification (P1).** Verifier opens `/verify`, enters or scans a token. If the token is valid, unexpired, unrevoked and consent covers the requested fields, show the minimal attested fields (name, institution, programme, enrolment status, academic year, masked APAAR, data-as-of date, `DataMode`). Every check is audited and visible to the student. Invalid/expired/revoked tokens show a neutral "cannot verify" message without disclosing why beyond the `VerificationTokenStatus`.
 
@@ -323,8 +323,8 @@ Uploaded raw files: deleted after commit or 7 days (configurable). Import row re
 | `programme_code` | Required | Must map to a programme for the academic year |
 | `academic_year` | Required | `YYYY-YY` (e.g. `2026-27`), second part = first + 1 |
 | `student_reference_number` | Required | Institution's own student ID |
-| `student_name` | Required | Synthetic in demo |
-| `apaar_id` | Required (missing → warning `APAAR_MISSING`, not rejection) | Synthetic in demo |
+| `student_name` | Required | Synthetic values only |
+| `apaar_id` | Required (missing → warning `APAAR_MISSING`, not rejection) | Synthetic values only |
 | `enrolment_status` | Required | `EnrolmentStatus` (Appendix A.11) |
 | `admission_date` | Optional | ISO date |
 | `seat_type` | Required | `SeatType` (Appendix A.12) |
@@ -446,8 +446,8 @@ The current frontend has a sound base (React + Tailwind + Lucide, sidebar + head
 ### 17.2 Global layout and shell (P0)
 - **Left sidebar:** product name, role-aware navigation built from the §6 permission matrix (a role never sees an item it cannot use), clear active state, collapse to icons on desktop, slide-in drawer on mobile. No developer screen numbers.
 - **Top bar:** page title + breadcrumbs; current institution scope (or "All institutions — oversight"); academic-year selector that applies globally; global search **only** if it searches real data (P1); notifications/task count **only** if backed by real data (open cases assigned to me) (P1); profile menu with role name and sign-out.
-- **Persistent `DEMO MODE` chip** in the top bar while `DataMode` ≠ `LIVE`, with a tooltip explaining what is synthetic and simulated.
-- **Disclaimer bar** on every page, including login and public verify: *"Independent prototype for demonstration. Not an official AICTE or APAAR portal. Uses synthetic data and simulated verification."*
+- **Production presentation (owner decision, 28 Oct 2026):** the UI reads like a live product. No "demo", "prototype", "synthetic" or "simulated" labels in the UI; registry connectors are labelled **Sandbox**.
+- **Site footer** on every page, including login and public verify: *"© 2026 APAAR ReconX · Smart India Hackathon 2026 (SIH26263) · Not affiliated with AICTE or the APAAR programme."* Keep this line: the site is public and uses AICTE/APAAR names. Never claim registry verification that did not happen (APAAR checks stay "Format OK — not verified").
 - **Consistent building blocks** (create once in `components/ui/`, reuse everywhere): `PageHeader` (title, description, primary action on the right), `FilterBar`, `DataTable` (sortable headers, pagination, empty/loading/error rows, sticky header), `StatCard` (clickable), `StatusBadge` (Appendix A driven), `Drawer` (record quick-view), `ConfirmDialog` (reason field when required), `Toast`, `ErrorBanner` (with retry and request ID), `EmptyState` (explains why and offers the next action), `Forbidden`, `SkeletonRows`, `ProvenanceTag` (source + as-of date), `MaskedId` (with optional audited reveal).
 - Every button works, navigates to a real destination, or is visibly disabled with the reason shown on hover/focus. **No fake controls.**
 
@@ -580,7 +580,7 @@ Data minimisation, purpose limitation (per-field purpose in data dictionary), co
 | False accusation from a match score | Neutral wording, explanations, human decision, correction path |
 | Stale reference creates false discrepancy | Freshness check → `REFERENCE_STALE` |
 | Export leaks identifiers | Masking, permission, reason, audit, formula escaping |
-| Mock verification mistaken for real | `SIMULATED` statuses, DEMO MODE chip, disclaimer |
+| Mock verification mistaken for real | `SIMULATED` statuses, SYNTHETIC DATA chip, disclaimer |
 | Verification token abuse / enumeration | 128-bit random tokens, hashed, expiry, revocation, rate limit, neutral failure message |
 | APAAR leak via DB dump | AES-GCM ciphertext + separate HMAC key; last-4 only for display |
 | CSRF on cookie session | CSRF token + SameSite |
@@ -612,7 +612,7 @@ Never report tests as passing unless run; paste actual output.
 ## 20. Demo data and script
 
 ### 20.1 Seed (deterministic; target command `python -m app.seed --reset` — add a `__main__` to the existing `app/seed` package if missing)
-3 synthetic institutions (`Demo Institute of Technology A/B/C`), 2–3 programmes each, intake references for `2025-26` and `2026-27` including NRI/OCI/FN/supernumerary lines for one programme, one deliberately stale reference, ~300 synthetic students. All names obviously synthetic or generated; all APAAR values start with `9999`.
+3 synthetic institutions (`Institute of Technology A/B/C`, codes `SYN-INST-A/B/C`), 2–3 programmes each, intake references for `2025-26` and `2026-27` including NRI/OCI/FN/supernumerary lines for one programme, one deliberately stale reference, ~300 synthetic students. All names obviously synthetic or generated; all APAAR values start with `9999`.
 
 ### 20.2 Planted scenarios
 
@@ -645,7 +645,7 @@ Never report tests as passing unless run; paste actual output.
 ## 21. Deployment and operations
 
 - Local: documented commands for backend, frontend, seed, tests; Docker Compose with PostgreSQL.
-- `.env.example`: `DATABASE_URL`, `SESSION_SECRET`, `APAAR_ENC_KEY`, `APAAR_HMAC_KEY`, `DEMO_PASSWORD`, `CORS_ORIGINS`, `DATA_MODE=DEMO_MOCK`, `PUBLIC_DEMO=false`, upload limits.
+- `.env.example`: `DATABASE_URL`, `SESSION_SECRET`, `APAAR_ENC_KEY`, `APAAR_HMAC_KEY`, `DEMO_PASSWORD`, `CORS_ORIGINS`, `DATA_MODE=SYNTHETIC`, `PUBLIC_DEMO=false`, upload limits.
 - Startup fails fast if required secrets are missing or are the example placeholders when `PUBLIC_DEMO=true`.
 - **Public demo (Render) only with `PUBLIC_DEMO=true`:** synthetic data only, unmasked export and reveal disabled, user management disabled, data reset nightly, credentials shared privately (not in README).
 - Health/readiness endpoints; logs without secrets; troubleshooting section in README (DB unavailable, missing env, CORS, API base URL, parser errors, provider not configured, migration failure).
@@ -732,7 +732,7 @@ After each phase report: files changed, summary, commands run, real test/build o
 ## 26. Acceptance checklist
 
 **P0**
-- ☐ Honesty conflicts C1–C4, C11, C12 and UI wording items U1–U5, U16, U17, U19 fixed; disclaimer + DEMO chip on every page
+- ☐ Honesty conflicts C1–C4, C11, C12 and UI wording items U1–U5, U16, U17, U19 fixed; disclaimer + SYNTHETIC DATA chip on every page
 - ☐ No full APAAR value reaches the browser except via the audited reveal (U6–U8); no passwords in frontend code (U2)
 - ☐ Every filter and button works or is disabled with a reason; lists paginate; error/empty/forbidden states exist (U9–U12)
 - ☐ CORS restricted, no default secrets, `.xls` disabled (B1, B2, B4)
@@ -807,15 +807,15 @@ Every status shown in UI, API, DB or reports uses these exact codes. UI labels i
 | `FORMAT_INVALID` | "Format invalid" | Fails the 12-digit rule |
 | `FORMAT_VALID` | "Format OK — not verified" | Passes 12-digit rule only; not proof of identity or existence |
 | `AWAITING_PROVIDER` | "Verification pending" | Provider check requested, not complete |
-| `SIMULATED_MATCH` | "Simulated match (demo)" | Mock provider positive; never official |
-| `SIMULATED_NO_MATCH` | "Simulated no match (demo)" | Mock provider negative |
+| `SIMULATED_MATCH` | "Simulated match" | Mock provider positive; never official |
+| `SIMULATED_NO_MATCH` | "Simulated no match" | Mock provider negative |
 | `VERIFIED_BY_PROVIDER` | "Verified by <provider>" | Real configured provider confirmed; provider, time, reference stored |
 | `NOT_FOUND_BY_PROVIDER` | "Not found by <provider>" | Real provider returned not-found |
 | `PROVIDER_UNAVAILABLE` | "Provider unavailable" | Check could not complete |
 | `STALE` | "Result expired" | Prior result outside freshness window |
 
 ### A.2 `SourceStatus` (institutions, programmes, intake references)
-`VERIFIED_FROM_SOURCE` "Verified from cited source" · `IMPORTED_UNVERIFIED` "Imported — unverified" · `SYNTHETIC` "Synthetic (demo)" · `STALE` "Stale" · `INCOMPLETE` "Incomplete" · `SOURCE_UNAVAILABLE` "Source unavailable" · `UNKNOWN` "Unknown"
+`VERIFIED_FROM_SOURCE` "Verified from cited source" · `IMPORTED_UNVERIFIED` "Imported — unverified" · `SYNTHETIC` "Synthetic" · `STALE` "Stale" · `INCOMPLETE` "Incomplete" · `SOURCE_UNAVAILABLE` "Source unavailable" · `UNKNOWN` "Unknown"
 
 ### A.3 `Severity`
 `ERROR` (row rejected) · `WARNING` (row accepted, flagged) · `INFO`
@@ -863,10 +863,10 @@ All other transitions → 409.
 `WITHIN_REFERENCE` "Within reference" · `POTENTIAL_DISCREPANCY` "Potential discrepancy — review required" · `CANNOT_DETERMINE_MISSING_REFERENCE` "Cannot determine — reference missing" · `CANNOT_DETERMINE_SCOPE_MISMATCH` "Cannot determine — scope mismatch" · `REFERENCE_STALE` "Reference may be stale" · `POLICY_RULE_UNCONFIRMED` "Cannot determine — rule unconfirmed"
 
 ### A.8 `DataMode`
-`DEMO_MOCK` "Demo — synthetic data, simulated providers" · `LIVE` (only if every active connector is `LIVE_TESTED` and data is real and authorised — not expected in this project)
+`SYNTHETIC` "Synthetic data, simulated providers" · `LIVE` (only if every active connector is `LIVE_TESTED` and data is real and authorised — not expected in this project)
 
 ### A.9 `ConnectorStatus`
-`LIVE_TESTED` · `DEMO_MOCK` · `NOT_CONFIGURED` · `NOT_AUTHORISED` · `UNAVAILABLE` · `FAILED`
+`LIVE_TESTED` · `SIMULATED` · `NOT_CONFIGURED` · `NOT_AUTHORISED` · `UNAVAILABLE` · `FAILED`
 
 ### A.10 `JobStatus` (imports, matching runs, intake runs)
 `UPLOADED` · `PREVIEW_READY` · `VALIDATING` · `VALIDATED` · `COMMITTING` · `COMPLETED` · `COMPLETED_WITH_WARNINGS` · `FAILED` · `CANCELLED`

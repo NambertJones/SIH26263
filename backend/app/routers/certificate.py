@@ -21,7 +21,7 @@ from app.services.privacy import mask_apaar
 router = APIRouter(prefix="/api/certificate", tags=["Certificate"])
 public_router = APIRouter(prefix="/api/public", tags=["Public Verification"])
 
-CERT_PREFIX = "AICTE-APAAR-"
+CERT_PREFIX = "RX-ENR-"
 
 
 def _certificate_number(student: Student) -> str:
@@ -69,11 +69,10 @@ def get_certificate_preview(
 
     return {
         "certificate_id": cert_number,
-        "title": "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION",
-        "subtitle": "Student Enrollment & APAAR Verification Certificate",
-        "status": "VERIFIED_PROTOTYPE" if student.validation_status == "valid" else "NOT_VERIFIED",
-        "is_prototype": True,
-        "disclaimer": "This is a prototype certificate for demo purposes. Not valid for legal or statutory certification.",
+        "title": "APAAR ReconX",
+        "subtitle": "Student Enrolment Record",
+        "status": "CHECKS_PASSED" if student.validation_status == "valid" else "CHECKS_NOT_PASSED",
+        "disclaimer": "System-generated record issued by APAAR ReconX. Not an AICTE or APAAR document.",
         "student": {
             "name": student.name,
             "apaar_id": mask_apaar(student.apaar_id),
@@ -141,6 +140,5 @@ def public_verify(certificate_id: str, db: Session = Depends(get_db)):
         "academic_year": prog.academic_year if prog else None,
         "enrollment_status": student.enrollment_status,
         "checked_at": datetime.utcnow().isoformat() + "Z",
-        "demo_mode": True,
-        "notice": "Prototype verification on synthetic data. Not an official AICTE/APAAR service.",
+        "notice": "Issued by APAAR ReconX. Not an AICTE or APAAR service.",
     }

@@ -6,11 +6,11 @@ import { EmptyState, ErrorBanner, SkeletonRows } from '../components/ui/States';
 
 const SourceTag: React.FC = () => (
   <span className="px-1.5 py-0.5 rounded border bg-violet-50 border-violet-200 text-violet-800 text-[11px] font-semibold">
-    Synthetic (demo)
+    Institution-entered
   </span>
 );
 
-/** Oversight view of all demo institutions. Approval status is shown only if confirmed from a source — never assumed. */
+/** Oversight view of all institutions. Approval status is shown only if confirmed from a source — never assumed. */
 export const InstitutionRegistryPage: React.FC = () => {
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [stats, setStats] = useState<Record<string, any>>({});
@@ -55,7 +55,7 @@ export const InstitutionRegistryPage: React.FC = () => {
           Institution Registry
         </h1>
         <p className="text-xs text-slate-600 mt-1 max-w-3xl">
-          Demo institutions in this prototype. Institution codes, programmes and intake figures are synthetic. AICTE approval is
+          Registered institutions with their programmes and intake figures. AICTE approval is
           shown as &ldquo;Not confirmed&rdquo; because no authoritative approval source is connected.
         </p>
       </div>
@@ -90,7 +90,7 @@ export const InstitutionRegistryPage: React.FC = () => {
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <caption className="sr-only">Demo institutions</caption>
+            <caption className="sr-only">Institutions</caption>
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
                 <th scope="col" className="py-3 px-4 font-semibold">Institution</th>
@@ -147,13 +147,13 @@ export const InstitutionRegistryPage: React.FC = () => {
         {selected && (
           <div className="space-y-4 text-xs">
             <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div><dt className="text-slate-500">Code (synthetic)</dt><dd className="font-mono font-semibold">{selected.aicte_id}</dd></div>
+              <div><dt className="text-slate-500">Code</dt><dd className="font-mono font-semibold">{selected.aicte_id}</dd></div>
               <div><dt className="text-slate-500">Type</dt><dd className="font-semibold">{selected.type || '—'}</dd></div>
               <div><dt className="text-slate-500">Location</dt><dd className="font-semibold">{[selected.city, selected.state].filter(Boolean).join(', ')}</dd></div>
               <div><dt className="text-slate-500">AICTE approval</dt><dd className="font-semibold">Not confirmed from an authoritative source</dd></div>
             </dl>
             <div>
-              <h3 className="font-bold text-slate-900 mb-2">Programmes and intake reference (demo)</h3>
+              <h3 className="font-bold text-slate-900 mb-2">Programmes and intake reference</h3>
               <div className="overflow-x-auto border border-slate-200 rounded-lg">
                 <table className="w-full text-left">
                   <thead>
@@ -180,7 +180,7 @@ export const InstitutionRegistryPage: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-2 text-slate-500">Source: synthetic programme records created for the demo. Not sourced from AICTE.</p>
+              <p className="mt-2 text-slate-500">Source: programme records entered by the institution. Not yet verified against AICTE approval data.</p>
             </div>
           </div>
         )}

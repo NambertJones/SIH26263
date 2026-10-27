@@ -133,7 +133,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm shadow-blue-500/20 transition cursor-pointer"
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Prototype Record</span>
+            <span>Enrolment Record</span>
           </button>
         </div>
       </div>
@@ -147,7 +147,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
               Possible Duplicate Enrolment — Review Required
             </h3>
             <p className="text-xs text-slate-700 mt-0.5 leading-relaxed font-medium">
-              {student.remarks || 'This APAAR ID matches another active student record in the prototype database. This needs human review; it is not proof of a duplicate.'}
+              {student.remarks || 'This APAAR ID matches another active student record. This needs human review; it is not proof of a duplicate.'}
             </p>
           </div>
         </div>

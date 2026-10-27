@@ -67,7 +67,7 @@ export const ReportsPage: React.FC = () => {
             <span>Reports & Analytics</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Reconciliation summaries, discrepancy lists and institution comparisons from synthetic demo data.
+            Reconciliation summaries, discrepancy lists and institution comparisons.
           </p>
         </div>
 
@@ -121,14 +121,14 @@ export const ReportsPage: React.FC = () => {
       {activeTab === 'enrollment' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Programme-wise Demo Intake Reference vs Enrolled</h2>
+            <h2 className="text-sm font-bold text-slate-900 mb-4">Programme-wise Intake Reference vs Enrolled</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
                     <th className="py-3 px-4 font-semibold">Programme Code</th>
                     <th className="py-3 px-4 font-semibold">Programme Name</th>
-                    <th className="py-3 px-4 font-semibold text-right">Intake Reference (demo)</th>
+                    <th className="py-3 px-4 font-semibold text-right">Intake Reference</th>
                     <th className="py-3 px-4 font-semibold text-right">Actual Enrolled</th>
                     <th className="py-3 px-4 font-semibold text-right">Utilization %</th>
                     <th className="py-3 px-4 font-semibold text-center">Status</th>
@@ -223,7 +223,7 @@ export const ReportsPage: React.FC = () => {
           <div>
             <h3 className="text-sm font-bold text-slate-900">Data-Quality Summary</h3>
             <p className="text-[11px] text-slate-500 mt-1">
-              Counts computed from the current (synthetic) records. No composite score is shown because no
+              Counts computed from the current records. No composite score is shown because no
               official scoring method exists for this data. Possible duplicates and intake differences need human review.
             </p>
           </div>
@@ -232,7 +232,7 @@ export const ReportsPage: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-slate-900">Records passing all prototype checks</p>
+                  <p className="font-semibold text-slate-900">Records passing all data checks</p>
                   <p className="text-[11px] text-slate-500">
                     APAAR format check, duplicate check and intake comparison. Format checks are not identity verification.
                   </p>
@@ -251,7 +251,7 @@ export const ReportsPage: React.FC = () => {
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-900">Programmes with potential intake discrepancy — review required</p>
-                  <p className="text-[11px] text-slate-500">Enrolled count above the demo intake reference</p>
+                  <p className="text-[11px] text-slate-500">Enrolled count above the intake reference</p>
                 </div>
                 <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">{compliance.programmes_exceeded}</span>
               </div>

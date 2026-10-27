@@ -93,11 +93,11 @@ export const CertificatePreviewPage: React.FC = () => {
           className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer"
         >
           <Printer className="w-4 h-4" />
-          <span>Print / Save Prototype Record PDF</span>
+          <span>Print / Save as PDF</span>
         </button>
       </div>
 
-      {/* Prototype enrolment record layout (not an official document) */}
+      {/* Enrolment record issued by APAAR ReconX (no government identity or signature) */}
       <div className="bg-white border-4 border-[#c8a84e] p-8 md:p-12 rounded-2xl shadow-xl relative overflow-hidden text-slate-800">
         {/* Ornate corner borders */}
         <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-[#c8a84e] pointer-events-none" />
@@ -105,12 +105,6 @@ export const CertificatePreviewPage: React.FC = () => {
         <div className="absolute bottom-2 left-2 w-10 h-10 border-b-2 border-l-2 border-[#c8a84e] pointer-events-none" />
         <div className="absolute bottom-2 right-2 w-10 h-10 border-b-2 border-r-2 border-[#c8a84e] pointer-events-none" />
 
-        {/* Diagonal Watermark */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none opacity-5 rotate-[-25deg]">
-          <span className="text-8xl font-black uppercase text-slate-900">
-            PROTOTYPE · NOT OFFICIAL
-          </span>
-        </div>
 
         {/* Certificate Header */}
         <div className="text-center pb-6 border-b border-slate-200 relative z-10">
@@ -124,10 +118,10 @@ export const CertificatePreviewPage: React.FC = () => {
             APAAR ReconX
           </h2>
           <p className="text-[11px] uppercase tracking-widest text-slate-500 mt-1 font-semibold">
-            Independent prototype · Not issued by AICTE or any government body
+            Student Data Verification Platform
           </p>
           <p className="text-sm font-bold text-blue-900 tracking-wide mt-3 uppercase border-y border-amber-300 py-1.5 inline-block px-6 bg-amber-50/80 rounded">
-            Prototype Enrolment Record — Not an Official Document
+            Student Enrolment Record
           </p>
         </div>
 
@@ -139,24 +133,24 @@ export const CertificatePreviewPage: React.FC = () => {
           </div>
 
           <p className="text-justify text-sm text-slate-700">
-            The synthetic student record below passed the APAAR ReconX prototype&apos;s data checks (APAAR format check, duplicate check, and comparison with the institution&apos;s demo intake reference). This is not verification by APAAR, DigiLocker or AICTE: those registry checks are simulated in this prototype.
+            The student record below has passed APAAR ReconX data checks: APAAR ID format validation, duplicate-enrolment check and comparison with the institution&apos;s intake reference.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-xl bg-slate-50 border border-slate-200">
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">Student Name (synthetic)</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">Student Name</span>
               <p className="text-base font-bold text-slate-900 mt-0.5">{certData?.student?.name}</p>
             </div>
 
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">APAAR ID (synthetic test value)</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">APAAR ID</span>
               <p className="text-base font-bold font-mono text-blue-700 mt-0.5">
                 {certData?.student?.apaar_id}
               </p>
             </div>
 
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">Institution (demo)</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">Institution</span>
               <p className="font-semibold text-slate-900 mt-0.5">
                 {certData?.institution?.name} ({certData?.institution?.aicte_id})
               </p>
@@ -199,7 +193,7 @@ export const CertificatePreviewPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Scan to verify (prototype)</span>
+                <span>Scan to verify</span>
               </div>
               <p className="text-[10px] text-slate-500 mt-0.5 break-all">
                 {certData?.verify_url ? (
@@ -213,16 +207,16 @@ export const CertificatePreviewPage: React.FC = () => {
             </div>
           </div>
 
-          {/* No signatory: a prototype must not imitate an official signature */}
+          {/* System-generated: no signatory */}
           <div className="text-center sm:text-right">
-            <p className="font-bold text-slate-900">System-generated prototype record</p>
+            <p className="font-bold text-slate-900">System-generated record</p>
             <p className="text-[11px] text-slate-500">No signature · not valid for any official purpose</p>
           </div>
         </div>
 
         {/* Disclaimer */}
         <p className="text-[10px] text-center text-slate-400 mt-6 tracking-wide uppercase border-t border-slate-200 pt-3 relative z-10">
-          Prototype record · Synthetic data · Smart India Hackathon 2026 · SIH26263 · Not an official AICTE or APAAR document
+          Issued by APAAR ReconX · Not an AICTE or APAAR document
         </p>
       </div>
     </div>

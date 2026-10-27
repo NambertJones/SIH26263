@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { ShieldCheck, UserCheck, LogOut, Sparkles, Menu } from 'lucide-react';
+import { ShieldCheck, UserCheck, LogOut, Menu } from 'lucide-react';
 import { PERSONA_LABEL, personaOf } from '../../lib/navigation';
 
 const ROLE_SWITCH: { role: 'admin' | 'institution_user' | 'reviewer'; label: string }[] = [
@@ -35,24 +35,16 @@ export const Header: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu }) => 
                 SIH26263
               </span>
             </div>
-            <p className="hidden sm:block text-[11px] text-slate-600 font-medium truncate">Independent prototype · not an official portal</p>
+            <p className="hidden sm:block text-[11px] text-slate-600 font-medium truncate">Student Data Verification Platform</p>
           </div>
         </div>
 
-        <div
-          className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-50 border border-violet-200 text-violet-800 text-xs font-bold tracking-wide shrink-0"
-          title="Demo mode: synthetic data; APAAR, DigiLocker, AICTE and AISHE connectors are simulated"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-violet-600" aria-hidden="true" />
-          <span>DEMO MODE</span>
-          <span className="hidden xl:inline font-medium">· synthetic data, simulated connectors</span>
-        </div>
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Demo-only role switcher (dev convenience; uses seeded demo accounts) */}
-        <div className="hidden md:flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 text-xs" role="group" aria-label="Switch demo role">
-          <span className="text-slate-600 px-2 text-[11px] font-medium">Demo role:</span>
+        {/* Quick role switcher */}
+        <div className="hidden md:flex items-center gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200 text-xs" role="group" aria-label="Switch role">
+          <span className="text-slate-600 px-2 text-[11px] font-medium">Switch role:</span>
           {ROLE_SWITCH.map((r) => (
             <button
               key={r.role}
@@ -72,7 +64,7 @@ export const Header: React.FC<{ onOpenMenu: () => void }> = ({ onOpenMenu }) => 
 
         <div className="flex items-center gap-2.5">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-semibold text-slate-800 leading-tight">{user?.name || 'Demo User'}</p>
+            <p className="text-xs font-semibold text-slate-800 leading-tight">{user?.name || 'User'}</p>
             <p className="text-[11px] text-blue-700 leading-tight font-medium">{persona ? PERSONA_LABEL[persona] : 'Guest'}</p>
           </div>
           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center" aria-hidden="true">

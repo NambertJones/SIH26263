@@ -1,15 +1,11 @@
 import React from 'react';
-import { Info } from 'lucide-react';
 
-export const DISCLAIMER_TEXT =
-  'Independent prototype for demonstration. Not an official AICTE or APAAR portal. Uses synthetic data and simulated verification.';
+/** Standard site footer. The affiliation line stays so the site is never mistaken for a government portal. */
+export const FOOTER_TEXT =
+  '© 2026 APAAR ReconX · Smart India Hackathon 2026 (SIH26263) · Not affiliated with AICTE or the APAAR programme.';
 
-export const DisclaimerBar: React.FC = () => (
-  <div
-    role="note"
-    className="w-full bg-amber-50 border-b border-amber-200 text-amber-900 text-xs font-medium px-4 py-1.5 flex items-center justify-center gap-2 text-center"
-  >
-    <Info className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-    <span>{DISCLAIMER_TEXT}</span>
-  </div>
+export const SiteFooter: React.FC = () => (
+  <footer className="w-full border-t border-slate-200 bg-white text-slate-500 text-[11px] px-4 py-3 text-center">
+    {FOOTER_TEXT}
+  </footer>
 );

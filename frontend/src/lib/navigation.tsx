@@ -19,7 +19,7 @@ import type { User } from '../types';
 import { isCentralUser } from './privacy';
 
 /**
- * Prototype personas mapped from the backend roles:
+ * Personas mapped from the backend roles:
  *  - inst_admin: college admin (role admin + institution)
  *  - operator: college data staff (role institution_user)
  *  - oversight: review officer (role reviewer)
@@ -37,8 +37,8 @@ export function personaOf(user?: User | null): Persona | null {
 export const PERSONA_LABEL: Record<Persona, string> = {
   inst_admin: 'Institution Admin',
   operator: 'Data Operator',
-  oversight: 'Oversight Reviewer (demo)',
-  central_admin: 'Platform Admin (demo)',
+  oversight: 'Oversight Reviewer',
+  central_admin: 'Platform Admin',
 };
 
 export interface NavItem {
@@ -64,7 +64,7 @@ export const NAV_ITEMS: NavItem[] = [
 
   { path: '/duplicates', label: 'Duplicate Review', section: 'Review', icon: icon(CopyCheck), roles: ALL, description: 'Possible duplicate records — human review required' },
   { path: '/cases', label: 'Cases', section: 'Review', icon: icon(AlertOctagon), roles: ALL },
-  { path: '/intake', label: 'Intake Reconciliation', section: 'Review', icon: icon(Scale), roles: ALL, description: 'Enrolled counts compared with the demo intake reference' },
+  { path: '/intake', label: 'Intake Reconciliation', section: 'Review', icon: icon(Scale), roles: ALL, description: 'Enrolled counts compared with the intake reference' },
 
   { path: '/reports', label: 'Reports & Exports', section: 'Reporting', icon: icon(BarChart3), roles: ALL },
   { path: '/audit', label: 'Audit Trail', section: 'Reporting', icon: icon(ScrollText), roles: ['inst_admin', 'oversight', 'central_admin'] },
@@ -73,7 +73,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/settings', label: 'Institution & Programmes', section: 'Administration', icon: icon(Building2), roles: ['inst_admin'] },
   { path: '/users', label: 'Users & Roles', section: 'Administration', icon: icon(UserCog), roles: ['inst_admin', 'central_admin'] },
   { path: '/integrations', label: 'Integrations & Sources', section: 'Administration', icon: icon(Network), roles: ALL },
-  { path: '/certificate', label: 'Prototype Record', section: 'Administration', icon: icon(FileBadge), roles: ['inst_admin', 'oversight', 'central_admin'] },
+  { path: '/certificate', label: 'Enrolment Record', section: 'Administration', icon: icon(FileBadge), roles: ['inst_admin', 'oversight', 'central_admin'] },
 ];
 
 /** Pages reached from other pages rather than the sidebar. */

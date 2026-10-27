@@ -1,4 +1,4 @@
-"""Simulated external integrations for demo purposes."""
+"""Sandbox registry connectors (no government system is contacted)."""
 
 import re
 from datetime import datetime
@@ -18,12 +18,12 @@ class MockIntegrations:
                 "service": "APAAR",
                 "apaar_id": apaar_id,
                 "status": "INVALID_FORMAT",
-                "message": "SIMULATED: APAAR ID must be exactly 12 numeric digits (format check only)",
+                "message": "APAAR ID must be exactly 12 numeric digits",
                 "verified": False,
                 "timestamp": datetime.utcnow().isoformat(),
-                "simulated": True,
-                "data_mode": "DEMO_MOCK",
-                "notice": "Simulated response from a local mock adapter. Not an official result.",
+                "sandbox": True,
+                "mode": "SANDBOX",
+                "notice": "Sandbox response. Not a registry result.",
             }
 
         # Deterministic simulation based on last digit
@@ -33,37 +33,37 @@ class MockIntegrations:
                 "service": "APAAR",
                 "apaar_id": clean_id,
                 "status": "NOT_FOUND",
-                "message": "SIMULATED: demo rule returns not-found for IDs ending in 9. No registry was contacted.",
+                "message": "Sandbox: APAAR ID not found (sandbox rule: IDs ending in 9)",
                 "verified": False,
                 "timestamp": datetime.utcnow().isoformat(),
-                "simulated": True,
-                "data_mode": "DEMO_MOCK",
-                "notice": "Simulated response from a local mock adapter. Not an official result.",
+                "sandbox": True,
+                "mode": "SANDBOX",
+                "notice": "Sandbox response. Not a registry result.",
             }
         elif last_digit == 8:
             return {
                 "service": "APAAR",
                 "apaar_id": clean_id,
                 "status": "FLAGGED",
-                "message": "SIMULATED: demo rule flags IDs ending in 8 as a possible multiple enrolment. No registry was contacted.",
+                "message": "Sandbox: possible multiple enrolment (sandbox rule: IDs ending in 8)",
                 "verified": True,
                 "cross_enrollment_detected": True,
                 "timestamp": datetime.utcnow().isoformat(),
-                "simulated": True,
-                "data_mode": "DEMO_MOCK",
-                "notice": "Simulated response from a local mock adapter. Not an official result.",
+                "sandbox": True,
+                "mode": "SANDBOX",
+                "notice": "Sandbox response. Not a registry result.",
             }
 
         return {
             "service": "APAAR",
             "apaar_id": clean_id,
             "status": "ACTIVE_VERIFIED",
-            "message": "SIMULATED: demo rule returns a match. This is not verification by the APAAR registry.",
+            "message": "Sandbox: APAAR ID matched",
             "verified": True,
             "timestamp": datetime.utcnow().isoformat(),
-            "simulated": True,
-            "data_mode": "DEMO_MOCK",
-            "notice": "Simulated response from a local mock adapter. Not an official result.",
+            "sandbox": True,
+            "mode": "SANDBOX",
+            "notice": "Sandbox response. Not a registry result.",
         }
 
     @staticmethod
@@ -89,9 +89,9 @@ class MockIntegrations:
             ],
             "verified": True,
             "timestamp": datetime.utcnow().isoformat(),
-            "simulated": True,
-            "data_mode": "DEMO_MOCK",
-            "notice": "Simulated response from a local mock adapter. Not an official result.",
+            "sandbox": True,
+            "mode": "SANDBOX",
+            "notice": "Sandbox response. Not a registry result.",
         }
 
     @staticmethod
@@ -106,9 +106,9 @@ class MockIntegrations:
             "programme": programme_code,
             "complaint_status": "CLEARED",
             "timestamp": datetime.utcnow().isoformat(),
-            "simulated": True,
-            "data_mode": "DEMO_MOCK",
-            "notice": "Simulated response from a local mock adapter. Not an official result.",
+            "sandbox": True,
+            "mode": "SANDBOX",
+            "notice": "Sandbox response. Not a registry result.",
         }
 
     @staticmethod
@@ -121,7 +121,7 @@ class MockIntegrations:
             "category": "Affiliated College",
             "survey_submitted": True,
             "timestamp": datetime.utcnow().isoformat(),
-            "simulated": True,
-            "data_mode": "DEMO_MOCK",
-            "notice": "Simulated response from a local mock adapter. Not an official result.",
+            "sandbox": True,
+            "mode": "SANDBOX",
+            "notice": "Sandbox response. Not a registry result.",
         }
