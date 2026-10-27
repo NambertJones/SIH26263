@@ -6,7 +6,7 @@ from datetime import datetime
 
 import qrcode
 import qrcode.image.svg
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -29,8 +29,14 @@ def _certificate_number(student: Student) -> str:
     return f"{CERT_PREFIX}{year}-{student.id[:8].upper()}"
 
 
-def _verify_url(cert_number: str) -> str:
-    return f"{settings.PUBLIC_BASE_URL.rstrip('/')}/verify/{cert_number}"
+def _verify_url(cert_number: str, request: Request) -> str:
+    base = settings.PUBLIC_BASE_URL.strip()
+    if not base:
+        # Behind Render/Vercel proxies, trust the forwarded scheme/host
+        proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+        host = request.headers.get("x-forwarded-host", request.headers.get("host", request.url.netloc))
+        base = f"{proto}://{host}"
+    return f"{base.rstrip('/')}/verify/{cert_number}"
 
 
 def _qr_svg_data_uri(text: str) -> str:
@@ -43,6 +49,7 @@ def _qr_svg_data_uri(text: str) -> str:
 @router.get("/{student_id}/preview")
 def get_certificate_preview(
     student_id: str,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -58,7 +65,7 @@ def get_certificate_preview(
     prog = db.query(Programme).filter(Programme.id == student.programme_id).first() if student.programme_id else None
 
     cert_number = _certificate_number(student)
-    verify_url = _verify_url(cert_number)
+    verify_url = _verify_url(cert_number, request)
 
     return {
         "certificate_id": cert_number,

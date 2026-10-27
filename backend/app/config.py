@@ -33,8 +33,9 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"]
 
-    # Public URL used in certificate QR codes (frontend /verify/<id> page)
-    PUBLIC_BASE_URL: str = "https://apaar-reconx.vercel.app"
+    # Public URL used in certificate QR codes (frontend /verify/<id> page).
+    # Leave empty to use the host the request came from
+    PUBLIC_BASE_URL: str = ""
 
     # Seed
     SEED_ON_STARTUP: bool = True

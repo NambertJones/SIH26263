@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { dashboardApi } from '../api/client';
+import { useAuth } from '../contexts/AuthContext';
+import { isCentralUser } from '../lib/privacy';
 import { StatCard } from '../components/ui/StatCard';
 import {
   Users,
@@ -15,6 +17,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [programs, setPrograms] = useState<any[]>([]);
   const [statusData, setStatusData] = useState<any>(null);
@@ -85,6 +88,7 @@ export const DashboardPage: React.FC = () => {
             </select>
           </div>
 
+          {!isCentralUser(user) && (
           <button
             onClick={() => navigate('/upload')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm shadow-blue-500/20 transition cursor-pointer"
@@ -92,6 +96,7 @@ export const DashboardPage: React.FC = () => {
             <Upload className="w-3.5 h-3.5" />
             <span>Upload Student Data</span>
           </button>
+          )}
         </div>
       </div>
 
@@ -102,8 +107,6 @@ export const DashboardPage: React.FC = () => {
           value={stats?.total_students || 0}
           subtitle="Registered across all programmes"
           icon={<Users className="w-5 h-5 text-blue-600" />}
-          trend="+12% from last cycle"
-          trendType="neutral"
           colorBorder="border-blue-100"
         />
         <StatCard

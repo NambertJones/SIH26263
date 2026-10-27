@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { isCentralUser } from '../../lib/privacy';
 import {
   LayoutDashboard,
   UploadCloud,
@@ -18,6 +19,7 @@ import {
 interface NavItem {
   name: string;
   path: string;
+  collegeOnly?: boolean;
   icon: React.ReactNode;
   badge?: string;
   screenNo: number;
@@ -26,19 +28,22 @@ interface NavItem {
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
 
-  const navItems: NavItem[] = [
+  const central = isCentralUser(user);
+
+  const allNavItems: NavItem[] = [
     { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" />, screenNo: 2 },
-    { name: 'Upload Data', path: '/upload', icon: <UploadCloud className="w-4 h-4" />, screenNo: 3 },
-    { name: 'Column Mapping', path: '/mapping', icon: <Split className="w-4 h-4" />, screenNo: 4 },
+    { name: 'Upload Data', collegeOnly: true, path: '/upload', icon: <UploadCloud className="w-4 h-4" />, screenNo: 3 },
+    { name: 'Column Mapping', collegeOnly: true, path: '/mapping', icon: <Split className="w-4 h-4" />, screenNo: 4 },
     { name: 'Validation Results', path: '/validation', icon: <CheckCircle2 className="w-4 h-4" />, screenNo: 5 },
     { name: 'Student Records', path: '/students', icon: <Users className="w-4 h-4" />, screenNo: 6 },
     { name: 'Verification Cases', path: '/cases', icon: <AlertOctagon className="w-4 h-4" />, screenNo: 7 },
     { name: 'Reports & Analytics', path: '/reports', icon: <BarChart3 className="w-4 h-4" />, screenNo: 8 },
     { name: 'Integrations', path: '/integrations', icon: <Network className="w-4 h-4" />, badge: 'Simulated', screenNo: 9 },
     { name: 'User Management', path: '/users', icon: <UserCog className="w-4 h-4" />, screenNo: 10 },
-    { name: 'Institution Settings', path: '/settings', icon: <Building2 className="w-4 h-4" />, screenNo: 11 },
+    { name: 'Institution Settings', collegeOnly: true, path: '/settings', icon: <Building2 className="w-4 h-4" />, screenNo: 11 },
     { name: 'Certificate Preview', path: '/certificate', icon: <Award className="w-4 h-4" />, screenNo: 12 },
   ];
+  const navItems = central ? allNavItems.filter((i) => !i.collegeOnly) : allNavItems;
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 h-[calc(100vh-4rem)] sticky top-16 select-none overflow-y-auto shadow-xs">
@@ -46,12 +51,14 @@ export const Sidebar: React.FC = () => {
         {/* Current Institution Info */}
         <div className="mx-4 mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200 shadow-xs">
           <p className="text-[10px] font-bold tracking-wider text-blue-700 uppercase">
-            Active Institution
+            {central ? 'AICTE Central Review' : 'Active Institution'}
           </p>
           <p className="text-xs font-semibold text-slate-800 truncate mt-0.5">
-            {user?.institution_name || "St. Joseph's College of Engineering"}
+            {central ? 'All approved institutions' : user?.institution_name || 'Institution'}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5 font-medium">AICTE ID: 1-1234567B</p>
+          <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
+            {central ? 'Verification Officer workspace' : 'Institution workspace'}
+          </p>
         </div>
 
         {/* Navigation Section */}

@@ -8,7 +8,7 @@ from app.models.user import User
 from app.models.institution import Institution
 from app.models.student import Student
 from app.middleware.auth import get_current_user
-from app.middleware.tenant import get_effective_institution_id, require_central_user
+from app.middleware.tenant import get_effective_institution_id, is_central_user
 from app.services.report_generator import (
     get_dashboard_stats,
     get_enrollment_by_program,
@@ -64,8 +64,11 @@ def institution_wise_report(
     db: Session = Depends(get_db),
 ):
     """Comparison table across all institutions (for reviewers/admins)."""
-    require_central_user(current_user)
-    institutions = db.query(Institution).all()
+    # AICTE users see every institution; college users only their own row
+    if is_central_user(current_user):
+        institutions = db.query(Institution).all()
+    else:
+        institutions = db.query(Institution).filter(Institution.id == current_user.institution_id).all()
     results = []
 
     for inst in institutions:

@@ -34,12 +34,15 @@ export const ColumnMappingPage: React.FC = () => {
     async function loadData() {
       if (!submissionId) {
         try {
+          // Resume only an upload that is still waiting for column mapping
           const list = await submissionsApi.list();
-          if (list.length > 0) {
-            navigate(`/mapping?submission_id=${list[0].id}`, { replace: true });
+          const pending = list.find((s: any) => s.status === 'mapping' || s.status === 'uploaded');
+          if (pending) {
+            navigate(`/mapping?submission_id=${pending.id}`, { replace: true });
             return;
           }
         } catch {}
+        setError('No upload is waiting for column mapping. Start from "Upload Data" to upload a CSV or Excel file.');
         setLoading(false);
         return;
       }

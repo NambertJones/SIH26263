@@ -69,15 +69,21 @@ def get_enrollment_by_program(db: Session, institution_id: str | None = None) ->
 
         utilization = round((enrolled_count / p.approved_intake * 100), 1) if p.approved_intake > 0 else 0.0
 
+        name = p.name
+        if not institution_id and p.institution is not None:
+            name = f"{p.name} — {p.institution.name}"
+
         data.append({
             "programme_id": p.id,
             "programme_code": p.code,
-            "programme_name": p.name,
+            "programme_name": name,
             "approved_intake": p.approved_intake,
             "enrolled_count": enrolled_count,
             "utilization_percentage": utilization,
         })
 
+    if not institution_id:
+        data.sort(key=lambda d: d["utilization_percentage"], reverse=True)
     return data
 
 
