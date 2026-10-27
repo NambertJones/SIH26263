@@ -135,7 +135,7 @@ def update_user(
         if (request.role and request.role not in ("institution_user", "admin")) or (
             request.institution_id is not None and request.institution_id != current_user.institution_id
         ):
-            raise HTTPException(status_code=403, detail="College administrators cannot grant AICTE roles or move users.")
+            raise HTTPException(status_code=403, detail="College administrators cannot grant oversight roles or move users.")
 
     if request.name:
         u.name = request.name.strip()

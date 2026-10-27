@@ -16,6 +16,9 @@ from app.schemas.student import StudentResponse, StudentCorrection, StudentDetai
 from app.middleware.auth import get_current_user
 from app.middleware.tenant import get_effective_institution_id
 from app.services.audit_service import log_event
+from app.services.privacy import mask_apaar, apaar_status
+from app.middleware.tenant import is_central_user
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/students", tags=["Students"])
 
@@ -46,7 +49,9 @@ def list_students(
         query = query.filter(Student.programme_id == programme_id)
 
     if validation_status and validation_status != "all":
-        query = query.filter(Student.validation_status == validation_status)
+        # Comma-separated values let dashboard cards link to exactly the records they count
+        statuses = [v.strip() for v in validation_status.split(",") if v.strip()]
+        query = query.filter(Student.validation_status.in_(statuses))
 
     if search:
         s_term = f"%{search}%"
@@ -69,9 +74,9 @@ def list_students(
             "id": s.id,
             "institution_id": s.institution_id,
             "submission_id": s.submission_id,
-            "apaar_id": s.apaar_id,
+            "apaar_masked": mask_apaar(s.apaar_id),
+            "apaar_status": apaar_status(s.apaar_id),
             "name": s.name,
-            "date_of_birth": s.date_of_birth,
             "gender": s.gender,
             "programme_id": s.programme_id,
             "programme_name": prog.name if prog else None,
@@ -80,8 +85,6 @@ def list_students(
             "enrollment_status": s.enrollment_status,
             "category": s.category,
             "institute_roll_no": s.institute_roll_no,
-            "email": s.email,
-            "phone": s.phone,
             "row_number": s.row_number,
             "validation_status": s.validation_status,
             "remarks": s.remarks,
@@ -147,7 +150,7 @@ def get_student(
             "id": curr.id,
             "version": curr.version,
             "name": curr.name,
-            "apaar_id": curr.apaar_id,
+            "apaar_masked": mask_apaar(curr.apaar_id),
             "validation_status": curr.validation_status,
             "remarks": curr.remarks,
             "updated_at": curr.updated_at,
@@ -163,7 +166,9 @@ def get_student(
         "institution_id": s.institution_id,
         "institution_name": inst.name if inst else None,
         "submission_id": s.submission_id,
-        "apaar_id": s.apaar_id,
+        "apaar_masked": mask_apaar(s.apaar_id),
+        "apaar_status": apaar_status(s.apaar_id),
+        "can_reveal_apaar": _can_reveal(current_user),
         "name": s.name,
         "date_of_birth": s.date_of_birth,
         "gender": s.gender,
@@ -187,6 +192,46 @@ def get_student(
         "cases": cases_list,
         "version_history": version_history,
     }
+
+
+class RevealRequest(BaseModel):
+    reason: str
+
+
+def _can_reveal(user: User) -> bool:
+    """Data operators never see full identifiers; admins and oversight reviewers may, with a reason."""
+    return user.role in ("admin", "reviewer")
+
+
+@router.post("/{student_id}/reveal-apaar")
+def reveal_apaar(
+    student_id: str,
+    body: RevealRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return the full APAAR ID for one record. Requires a reason and is always audited."""
+    s = db.query(Student).filter(Student.id == student_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="Student not found")
+    get_effective_institution_id(current_user, s.institution_id)
+
+    if not _can_reveal(current_user):
+        raise HTTPException(status_code=403, detail="Your role cannot view full APAAR IDs.")
+    if not body.reason or len(body.reason.strip()) < 5:
+        raise HTTPException(status_code=400, detail="A reason (at least 5 characters) is required to view the full APAAR ID.")
+
+    # The audit entry records who looked and why, never the identifier itself
+    log_event(
+        db=db,
+        action="apaar_revealed",
+        actor_id=current_user.id,
+        actor_email=current_user.email,
+        entity_type="student",
+        entity_id=s.id,
+        description=f"Full APAAR ID viewed for {s.name}. Reason: {body.reason.strip()}",
+    )
+    return {"apaar_id": s.apaar_id, "visible_seconds": 30}
 
 
 @router.get("/{student_id}/cases")

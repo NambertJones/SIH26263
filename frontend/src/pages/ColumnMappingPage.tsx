@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { ImportStepper } from '../components/ui/ImportStepper';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { submissionsApi } from '../api/client';
 import { Split, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
 
 const REQUIRED_FIELDS = [
-  { key: 'name', label: 'Student Full Name', required: true, desc: 'Candidate official legal name' },
-  { key: 'apaar_id', label: 'APAAR ID', required: true, desc: '12-digit One Nation One Student ID' },
+  { key: 'name', label: 'Student Full Name', required: true, desc: 'Name as on the admission record' },
+  { key: 'apaar_id', label: 'APAAR ID', required: true, desc: '12-digit APAAR ID (format checked only)' },
   { key: 'date_of_birth', label: 'Date of Birth', required: true, desc: 'DOB for identity matching' },
   { key: 'gender', label: 'Gender', required: true, desc: 'Male, Female, or Other' },
   { key: 'programme', label: 'Programme / Branch', required: false, desc: 'CSE, AIML, ECE, MECH, etc.' },
@@ -13,7 +14,7 @@ const REQUIRED_FIELDS = [
   { key: 'enrollment_status', label: 'Enrollment Status', required: false, desc: 'Active, Withdrawn, etc.' },
   { key: 'category', label: 'Social Category / Quota', required: false, desc: 'General, OBC, SC, ST, EWS' },
   { key: 'institute_roll_no', label: 'Institute Roll / Reg No', required: false, desc: 'College register number' },
-  { key: 'email', label: 'Email Address', required: false, desc: 'Student official or personal email' },
+  { key: 'email', label: 'Email Address', required: false, desc: 'Student email' },
   { key: 'phone', label: 'Contact Phone Number', required: false, desc: 'Mobile number' },
 ];
 
@@ -105,45 +106,14 @@ export const ColumnMappingPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Stepper */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between max-w-3xl mx-auto text-xs">
-          <div className="flex items-center gap-2 text-emerald-700 font-semibold">
-            <span className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center justify-center text-xs font-bold">
-              ✓
-            </span>
-            <span>Upload File</span>
-          </div>
-          <div className="h-0.5 w-12 bg-emerald-200" />
-          <div className="flex items-center gap-2 text-blue-700 font-bold">
-            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
-              2
-            </span>
-            <span>Map Columns</span>
-          </div>
-          <div className="h-0.5 w-12 bg-slate-200" />
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
-              3
-            </span>
-            <span>Validate & Reconcile</span>
-          </div>
-          <div className="h-0.5 w-12 bg-slate-200" />
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
-              4
-            </span>
-            <span>Submit</span>
-          </div>
-        </div>
-      </div>
+      <ImportStepper current={2} />
 
       {/* Header Info */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <Split className="w-5 h-5 text-blue-600" />
-            <span>Map CSV Columns to AICTE Standard Schema</span>
+            <span>Map CSV Columns to the ReconX Template</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
             File: <strong className="text-blue-700">{submission?.file_name}</strong> · Total Rows:{' '}
@@ -170,7 +140,7 @@ export const ColumnMappingPage: React.FC = () => {
       {/* Mapping Table */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-          <span>AICTE Standard Field</span>
+          <span>ReconX Template Field</span>
           <span>Detected File Header</span>
         </div>
 

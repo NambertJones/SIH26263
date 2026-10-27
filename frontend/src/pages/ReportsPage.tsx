@@ -9,7 +9,6 @@ import {
   FileSpreadsheet,
   AlertTriangle,
   Building,
-  CheckCircle2,
   Calendar,
 } from 'lucide-react';
 
@@ -65,10 +64,10 @@ export const ReportsPage: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-wide flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
-            <span>AICTE Statutory Reports & Analytics</span>
+            <span>Reports & Analytics</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Reconciliation summaries, discrepancy audits, and multi-institutional compliance reporting.
+            Reconciliation summaries, discrepancy lists and institution comparisons from synthetic demo data.
           </p>
         </div>
 
@@ -90,7 +89,7 @@ export const ReportsPage: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export CSV Audit File</span>
+            <span>Export CSV</span>
           </button>
         </div>
       </div>
@@ -100,7 +99,7 @@ export const ReportsPage: React.FC = () => {
         {[
           { id: 'enrollment', label: 'Enrollment Summary', icon: <FileSpreadsheet className="w-3.5 h-3.5" /> },
           { id: 'discrepancy', label: `Discrepancy Audit (${discrepancies.length})`, icon: <AlertTriangle className="w-3.5 h-3.5" /> },
-          { id: 'compliance', label: 'AICTE Compliance Rating', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
+          { id: 'compliance', label: 'Data-Quality Summary', icon: <ShieldCheck className="w-3.5 h-3.5" /> },
           { id: 'institution', label: 'Institution-Wise Matrix', icon: <Building className="w-3.5 h-3.5" /> },
         ].map((tab) => (
           <button
@@ -122,14 +121,14 @@ export const ReportsPage: React.FC = () => {
       {activeTab === 'enrollment' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
-            <h2 className="text-sm font-bold text-slate-900 mb-4">Programme-wise Sanctioned Intake vs Enrolled</h2>
+            <h2 className="text-sm font-bold text-slate-900 mb-4">Programme-wise Demo Intake Reference vs Enrolled</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
                     <th className="py-3 px-4 font-semibold">Programme Code</th>
                     <th className="py-3 px-4 font-semibold">Programme Name</th>
-                    <th className="py-3 px-4 font-semibold text-right">Approved Intake</th>
+                    <th className="py-3 px-4 font-semibold text-right">Intake Reference (demo)</th>
                     <th className="py-3 px-4 font-semibold text-right">Actual Enrolled</th>
                     <th className="py-3 px-4 font-semibold text-right">Utilization %</th>
                     <th className="py-3 px-4 font-semibold text-center">Status</th>
@@ -150,11 +149,11 @@ export const ReportsPage: React.FC = () => {
                         <td className="py-3 px-4 text-center">
                           {isExceeded ? (
                             <span className="text-[10px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold">
-                              Exceeded (+{p.enrolled_count - p.approved_intake})
+                              Potential discrepancy (+{p.enrolled_count - p.approved_intake}) — review
                             </span>
                           ) : (
                             <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-                              Within Limit
+                              Within reference
                             </span>
                           )}
                         </td>
@@ -172,7 +171,7 @@ export const ReportsPage: React.FC = () => {
       {activeTab === 'discrepancy' && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-900">Full Discrepancy Audit Log</h2>
+            <h2 className="text-sm font-bold text-slate-900">Discrepancy List</h2>
             <span className="text-xs text-slate-500 font-medium">{discrepancies.length} total issues recorded</span>
           </div>
           <div className="overflow-x-auto">
@@ -218,57 +217,48 @@ export const ReportsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Tab 3: Compliance Report */}
+      {/* Tab 3: Data-quality summary — traceable counts only, no composite score */}
       {activeTab === 'compliance' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs text-center flex flex-col items-center justify-center">
-            <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-              Overall Compliance Rating
-            </h3>
-            <div className="w-32 h-32 rounded-full border-4 border-blue-600 flex items-center justify-center my-3 bg-blue-50/50 shadow-inner">
-              <span className="text-3xl font-extrabold text-slate-900">{compliance?.compliance_score || 0}</span>
-              <span className="text-xs text-slate-500 ml-1">/100</span>
-            </div>
-            <span
-              className={`text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full ${
-                compliance?.status === 'COMPLIANT'
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-              }`}
-            >
-              {compliance?.status || 'COMPLIANT'}
-            </span>
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Data-Quality Summary</h3>
+            <p className="text-[11px] text-slate-500 mt-1">
+              Counts computed from the current (synthetic) records. No composite score is shown because no
+              official scoring method exists for this data. Possible duplicates and intake differences need human review.
+            </p>
           </div>
 
-          <div className="md:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 mb-2">AICTE Statutory Audit Criteria</h3>
-
+          {compliance ? (
             <div className="space-y-3 text-xs">
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-slate-900">APAAR ID Biometric Linkage Compliance</p>
-                  <p className="text-[11px] text-slate-500">{compliance?.valid_percentage}% authenticated with NDEAR registry</p>
+                  <p className="font-semibold text-slate-900">Records passing all prototype checks</p>
+                  <p className="text-[11px] text-slate-500">
+                    APAAR format check, duplicate check and intake comparison. Format checks are not identity verification.
+                  </p>
                 </div>
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span className="text-slate-900 font-bold bg-white px-2 py-0.5 rounded border border-slate-200">{compliance.valid_percentage}%</span>
               </div>
 
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-slate-900">Cross-Institution Duplicate Enrollments</p>
-                  <p className="text-[11px] text-slate-500">{compliance?.duplicate_count} active duplicate conflicts detected</p>
+                  <p className="font-semibold text-slate-900">Possible duplicate enrolments — review required</p>
+                  <p className="text-[11px] text-slate-500">Open cases where the same APAAR ID appears more than once</p>
                 </div>
-                <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{compliance?.duplicate_count}</span>
+                <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{compliance.duplicate_count}</span>
               </div>
 
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-slate-900">Sanctioned Intake Over-Enrollment Violations</p>
-                  <p className="text-[11px] text-slate-500">{compliance?.programmes_exceeded} programmes currently exceed quota</p>
+                  <p className="font-semibold text-slate-900">Programmes with potential intake discrepancy — review required</p>
+                  <p className="text-[11px] text-slate-500">Enrolled count above the demo intake reference</p>
                 </div>
-                <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">{compliance?.programmes_exceeded}</span>
+                <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded border border-rose-200">{compliance.programmes_exceeded}</span>
               </div>
             </div>
-          </div>
+          ) : (
+            <p className="text-xs text-slate-500">Summary data is not available.</p>
+          )}
         </div>
       )}
 
@@ -287,7 +277,7 @@ export const ReportsPage: React.FC = () => {
                   <th className="py-3 px-4 font-semibold">Location</th>
                   <th className="py-3 px-4 font-semibold">Type</th>
                   <th className="py-3 px-4 font-semibold text-right">Students</th>
-                  <th className="py-3 px-4 font-semibold text-right">Verified %</th>
+                  <th className="py-3 px-4 font-semibold text-right">Passing checks %</th>
                   <th className="py-3 px-4 font-semibold text-right">Issues</th>
                   <th className="py-3 px-4 font-semibold text-center">Status</th>
                 </tr>

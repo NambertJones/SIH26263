@@ -1,17 +1,32 @@
 """Privacy helpers for national identifiers (DPDP data minimisation)."""
 
+import re
+
+_APAAR_RE = re.compile(r"^\d{12}$")
+
+
+def normalise_apaar(apaar_id: str | None) -> str:
+    """Strip spaces and hyphens so '1234 5678-9012' compares equal to '123456789012'."""
+    return re.sub(r"[\s-]", "", apaar_id or "")
+
+
+def apaar_status(apaar_id: str | None) -> str:
+    """Format-only status of an APAAR value. Never implies identity verification."""
+    value = normalise_apaar(apaar_id)
+    if not value:
+        return "MISSING"
+    return "FORMAT_VALID" if _APAAR_RE.match(value) else "FORMAT_INVALID"
+
 
 def mask_apaar(apaar_id: str | None) -> str:
-    """Mask a 12-digit APAAR ID as '1234-****-9012'.
+    """Mask an APAAR ID down to its last 4 digits, e.g. 'XXXX-XXXX-9012'.
 
-    Anything that is not a clean 12-digit ID is masked except its last 2 chars,
-    so malformed IDs are never echoed in full either.
+    Malformed values are never echoed: only their length is shown so the
+    record can still be found and corrected.
     """
-    if not apaar_id:
+    value = normalise_apaar(apaar_id)
+    if not value:
         return "N/A"
-    value = apaar_id.strip()
-    if len(value) == 12 and value.isdigit():
-        return f"{value[:4]}-****-{value[-4:]}"
-    if len(value) <= 2:
-        return "*" * len(value)
-    return "*" * (len(value) - 2) + value[-2:]
+    if _APAAR_RE.match(value):
+        return f"XXXX-XXXX-{value[-4:]}"
+    return f"Invalid format ({len(value)} chars)"

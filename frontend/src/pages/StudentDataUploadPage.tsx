@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ImportStepper } from '../components/ui/ImportStepper';
 import { useNavigate } from 'react-router-dom';
 import { submissionsApi } from '../api/client';
 import {
@@ -83,7 +84,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'AICTE_Student_Admission_Template.csv');
+    link.setAttribute('download', 'ReconX_Student_Template_SYNTHETIC_DEMO.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -91,38 +92,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Wizard Progress Stepper */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between max-w-3xl mx-auto text-xs">
-          <div className="flex items-center gap-2 text-blue-700 font-bold">
-            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
-              1
-            </span>
-            <span>Upload File</span>
-          </div>
-          <div className="h-0.5 w-12 bg-slate-200" />
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
-              2
-            </span>
-            <span>Map Columns</span>
-          </div>
-          <div className="h-0.5 w-12 bg-slate-200" />
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
-              3
-            </span>
-            <span>Validate & Reconcile</span>
-          </div>
-          <div className="h-0.5 w-12 bg-slate-200" />
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
-              4
-            </span>
-            <span>Submit</span>
-          </div>
-        </div>
-      </div>
+      <ImportStepper current={1} />
 
       {/* Main Grid: Upload Area on Left, Checklist on Right */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -131,7 +101,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
           <div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Upload Student Admission Data</h1>
             <p className="text-xs text-slate-500 mt-1 font-medium">
-              Upload institutional admission records (CSV, XLSX) to perform automated APAAR verification and intake reconciliation.
+              Upload institutional admission records (CSV, XLSX) to run APAAR format checks, duplicate checks and intake comparison. Flags need human review.
             </p>
           </div>
 
@@ -209,7 +179,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
               className="flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-semibold py-1.5 px-3 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Download Sample CSV Template</span>
+              <span>Download Sample CSV (synthetic test data)</span>
             </button>
 
             <button
@@ -236,7 +206,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800">Student Full Name</p>
-                  <p className="text-[11px] text-slate-500">As per official 10th / Aadhaar record</p>
+                  <p className="text-[11px] text-slate-500">As on the institution's admission record</p>
                 </div>
               </div>
 
@@ -244,7 +214,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800">APAAR ID (12 Digits)</p>
-                  <p className="text-[11px] text-slate-500">Automated One Nation One Student ID</p>
+                  <p className="text-[11px] text-slate-500">Format check only (12 digits); not verified with the APAAR registry</p>
                 </div>
               </div>
 
@@ -268,7 +238,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-slate-800">Academic Programme</p>
-                  <p className="text-[11px] text-slate-500">Reconciled against approved AICTE intake</p>
+                  <p className="text-[11px] text-slate-500">Compared with the demo intake reference</p>
                 </div>
               </div>
             </div>
@@ -280,7 +250,7 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
               <span>Duplicate & Intake Rule:</span>
             </div>
             <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-              Records will be checked in real-time against cross-institution enrollments and sanctioned intake quotas.
+              Records are checked for possible duplicates (within and across institutions) and compared with the demo intake reference. Flags need human review.
             </p>
           </div>
         </div>

@@ -47,7 +47,7 @@ export const IntegrationsPage: React.FC = () => {
         : service.service_name === 'digilocker'
         ? '240000000001'
         : service.service_name === 'aicte'
-        ? '1-1234567B'
+        ? 'DEMO-INST-A'
         : 'C-12345'
     );
     setTestModalOpen(true);
@@ -84,10 +84,10 @@ export const IntegrationsPage: React.FC = () => {
           <Sparkles className="w-5 h-5 text-blue-600 shrink-0" />
           <div>
             <h3 className="text-xs font-bold text-blue-900 uppercase tracking-wide">
-              Demo Guardrail Notice: All Integrations Simulated
+              Demo mode: all integrations are simulated
             </h3>
             <p className="text-xs text-slate-600 mt-0.5">
-              In accordance with AICTE SIH rules, all external registry connectors simulate government API responses without making live network calls to production databases.
+              None of these connectors is connected to a government system. Each one is a local mock adapter that returns fixed or rule-based sample responses, so real integration would need official API access and authorisation.
             </p>
           </div>
         </div>
@@ -100,10 +100,10 @@ export const IntegrationsPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-wide flex items-center gap-2">
           <Network className="w-5 h-5 text-blue-600" />
-          <span>National Registry Integrations & Connectors</span>
+          <span>Integrations & Connectors (Simulated)</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Manage API adapters for APAAR NDEAR, DigiLocker NAD, AICTE Approval, and AISHE databases.
+          Mock adapters standing in for APAAR, DigiLocker / NAD, AICTE approval and AISHE lookups. Status: demo/mock, not configured for live use.
         </p>
       </div>
 
@@ -119,9 +119,9 @@ export const IntegrationsPage: React.FC = () => {
                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">
                   {item.badge}
                 </span>
-                <span className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Active</span>
+                <span className="flex items-center gap-1.5 text-xs text-violet-700 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-violet-500" aria-hidden="true" />
+                  <span>Demo / mock — not live</span>
                 </span>
               </div>
 
@@ -134,13 +134,13 @@ export const IntegrationsPage: React.FC = () => {
             </div>
 
             <div className="pt-2 flex items-center justify-between border-t border-slate-100">
-              <span className="text-[11px] text-slate-400">Last heartbeat: {item.last_checked}</span>
+              <span className="text-[11px] text-slate-400">Last check: {item.last_checked}</span>
               <button
                 onClick={() => openTestModal(item)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold rounded-lg text-xs transition cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5" />
-                <span>Test Mock Verification</span>
+                <span>Run Simulated Test</span>
               </button>
             </div>
           </div>
@@ -151,12 +151,12 @@ export const IntegrationsPage: React.FC = () => {
       <Modal
         isOpen={testModalOpen}
         onClose={() => setTestModalOpen(false)}
-        title={`Simulated Verification: ${selectedService?.display_name || ''}`}
+        title={`Simulated Test: ${selectedService?.display_name || ''}`}
         maxWidth="xl"
       >
         <div className="space-y-4 text-xs">
           <p className="text-slate-600">
-            Execute a mock verification query against the simulated adapter endpoint to verify response schema and validation behavior.
+            Runs a query against the local mock adapter to show the response format. The result is SIMULATED and is not an official verification.
           </p>
 
           <div>
@@ -186,10 +186,10 @@ export const IntegrationsPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-700 flex items-center gap-1.5">
                   <Code2 className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Adapter JSON Response (Simulated):</span>
+                  <span>SIMULATED mock adapter response (not an official result):</span>
                 </span>
-                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-semibold">
-                  HTTP 200 OK
+                <span className="text-[10px] font-mono text-violet-800 bg-violet-50 px-2 py-0.5 rounded border border-violet-200 font-semibold">
+                  SIMULATED
                 </span>
               </div>
               <pre className="p-3.5 bg-slate-900 border border-slate-800 rounded-xl text-[11px] font-mono text-emerald-300 overflow-x-auto max-h-60">

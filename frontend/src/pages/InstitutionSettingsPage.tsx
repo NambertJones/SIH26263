@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { institutionsApi } from '../api/client';
+import { useToast } from '../contexts/ToastContext';
 import { Modal } from '../components/ui/Modal';
 import {
   Building2,
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export const InstitutionSettingsPage: React.FC = () => {
+  const { notify } = useToast();
   const [activeTab, setActiveTab] = useState<'profile' | 'programmes' | 'calendar' | 'security'>('profile');
   const [institution, setInstitution] = useState<any>(null);
   const [programmes, setProgrammes] = useState<any[]>([]);
@@ -74,7 +76,7 @@ export const InstitutionSettingsPage: React.FC = () => {
       });
       setSuccessMsg('Institution profile updated successfully.');
     } catch (err: any) {
-      alert(err.message || 'Failed to update profile');
+      notify(err.message || 'Failed to update profile', 'error');
     } finally {
       setSaving(false);
     }
@@ -99,7 +101,7 @@ export const InstitutionSettingsPage: React.FC = () => {
       setNewProgCode('');
       setNewProgName('');
     } catch (err: any) {
-      alert(err.message || 'Failed to add programme');
+      notify(err.message || 'Failed to add programme', 'error');
     } finally {
       setAddingProg(false);
     }
@@ -119,10 +121,10 @@ export const InstitutionSettingsPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-wide flex items-center gap-2">
           <Building2 className="w-5 h-5 text-blue-600" />
-          <span>Institution Profile & Sanctioned Seat Matrix</span>
+          <span>Institution Profile & Intake Reference (Demo)</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Manage AICTE institutional credentials, approved programmes, and sanctioned seat allocations.
+          Manage the demo institution profile, programmes and intake reference figures. All values are synthetic.
         </p>
       </div>
 
@@ -139,7 +141,7 @@ export const InstitutionSettingsPage: React.FC = () => {
           { id: 'profile', label: 'Institution Profile', icon: <Building2 className="w-3.5 h-3.5" /> },
           { id: 'programmes', label: `Programmes & Intake (${programmes.length})`, icon: <BookOpen className="w-3.5 h-3.5" /> },
           { id: 'calendar', label: 'Academic Year Cycle', icon: <Calendar className="w-3.5 h-3.5" /> },
-          { id: 'security', label: 'Security & 2FA', icon: <Shield className="w-3.5 h-3.5" /> },
+          { id: 'security', label: 'Security', icon: <Shield className="w-3.5 h-3.5" /> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -163,7 +165,7 @@ export const InstitutionSettingsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
-                  AICTE Permanent Institute ID
+                  AICTE Institute ID (synthetic demo value)
                 </label>
                 <input
                   type="text"
@@ -185,7 +187,7 @@ export const InstitutionSettingsPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Institution Official Name</label>
+              <label className="block font-semibold text-slate-700 mb-1">Institution Name</label>
               <input
                 type="text"
                 required
@@ -245,7 +247,7 @@ export const InstitutionSettingsPage: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-xs text-slate-500">
-              Sanctioned seat capacity authoritative intake reference figures used by the reconciliation engine.
+              Demo intake reference figures used by the reconciliation checks. Not sourced from AICTE approval data.
             </p>
             <button
               onClick={() => setProgModalOpen(true)}
@@ -262,10 +264,10 @@ export const InstitutionSettingsPage: React.FC = () => {
                 <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
                   <th className="py-3 px-4 font-semibold">Code</th>
                   <th className="py-3 px-4 font-semibold">Programme Name</th>
-                  <th className="py-3 px-4 font-semibold text-right">Sanctioned Intake</th>
+                  <th className="py-3 px-4 font-semibold text-right">Intake Reference (demo)</th>
                   <th className="py-3 px-4 font-semibold text-right">Supernumerary (TFW)</th>
                   <th className="py-3 px-4 font-semibold text-right">NRI Quota</th>
-                  <th className="py-3 px-4 font-semibold text-right">Total Effective Quota</th>
+                  <th className="py-3 px-4 font-semibold text-right">Total (demo)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -290,7 +292,7 @@ export const InstitutionSettingsPage: React.FC = () => {
       {/* Tab 3: Calendar */}
       {activeTab === 'calendar' && (
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs space-y-4 text-xs">
-          <h3 className="text-sm font-bold text-slate-900 mb-2">Admission Cycle Deadlines & Cutoffs</h3>
+          <h3 className="text-sm font-bold text-slate-900 mb-2">Admission Cycle Dates (demo values, not official deadlines)</h3>
           <div className="space-y-3">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
               <div>
@@ -317,18 +319,20 @@ export const InstitutionSettingsPage: React.FC = () => {
           <h3 className="text-sm font-bold text-slate-900 mb-2">Security & Identity Safeguards</h3>
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
             <div>
-              <p className="font-semibold text-slate-900">Aadhaar eKYC Biometric Verification</p>
-              <p className="text-[11px] text-slate-500">Enforce mandatory APAAR UIDAI biometric link</p>
+              <p className="font-semibold text-slate-900">APAAR / identity verification</p>
+              <p className="text-[11px] text-slate-500">
+                Not connected. The prototype only checks APAAR ID format (12 digits); real verification needs authorised registry access.
+              </p>
             </div>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
-              Enforced (Demo)
+            <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300 font-bold">
+              Not configured
             </span>
           </div>
 
           <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
             <div>
               <p className="font-semibold text-slate-900">Institutional Data Isolation (Multi-Tenancy)</p>
-              <p className="text-[11px] text-slate-500">Cross-tenant boundaries enforced at middleware layer</p>
+              <p className="text-[11px] text-slate-500">Institution users can only access their own institution's records (server-side check)</p>
             </div>
             <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold">
               Active
@@ -365,7 +369,7 @@ export const InstitutionSettingsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Approved Sanctioned Intake Seats</label>
+            <label className="block font-semibold text-slate-700 mb-1">Intake Reference Seats (demo)</label>
             <input
               type="number"
               required

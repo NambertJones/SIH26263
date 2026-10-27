@@ -1,10 +1,15 @@
 import type { User } from '../types';
 
-/** Mask a valid 12-digit APAAR ID as 1234-****-9012. Malformed values are shown as-is so they can be corrected. */
+/**
+ * Mask an APAAR ID to its last 4 digits (XXXX-XXXX-9012). The API already sends masked values;
+ * this is a safety net so a raw value is never rendered by mistake.
+ */
 export function maskApaar(apaar?: string | null): string {
   if (!apaar) return '';
   const v = apaar.trim();
-  return /^\d{12}$/.test(v) ? `${v.slice(0, 4)}-****-${v.slice(-4)}` : v;
+  if (/^\d{12}$/.test(v)) return `XXXX-XXXX-${v.slice(-4)}`;
+  if (/^\d+$/.test(v)) return `Invalid format (${v.length} chars)`;
+  return v; // already masked by the server
 }
 
 /** AICTE-side users: verification officers, or an AICTE admin (admin role with no institution). */

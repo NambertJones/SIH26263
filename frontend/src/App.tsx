@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 
-// 12 Screen Pages
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { StudentDataUploadPage } from './pages/StudentDataUploadPage';
@@ -18,6 +18,11 @@ import { UserManagementPage } from './pages/UserManagementPage';
 import { InstitutionSettingsPage } from './pages/InstitutionSettingsPage';
 import { CertificatePreviewPage } from './pages/CertificatePreviewPage';
 import { PublicVerifyPage } from './pages/PublicVerifyPage';
+import { AuditTrailPage } from './pages/AuditTrailPage';
+import { IntakeReconciliationPage } from './pages/IntakeReconciliationPage';
+import { DuplicateReviewPage } from './pages/DuplicateReviewPage';
+import { InstitutionRegistryPage } from './pages/InstitutionRegistryPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -40,6 +45,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 export const App: React.FC = () => {
   return (
     <AuthProvider>
+      <ToastProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
@@ -67,11 +73,15 @@ export const App: React.FC = () => {
             <Route path="users" element={<UserManagementPage />} />
             <Route path="settings" element={<InstitutionSettingsPage />} />
             <Route path="certificate" element={<CertificatePreviewPage />} />
+            <Route path="duplicates" element={<DuplicateReviewPage />} />
+            <Route path="intake" element={<IntakeReconciliationPage />} />
+            <Route path="audit" element={<AuditTrailPage />} />
+            <Route path="institutions" element={<InstitutionRegistryPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
-
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 };

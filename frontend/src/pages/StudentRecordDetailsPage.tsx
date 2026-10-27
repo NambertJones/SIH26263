@@ -3,6 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { studentsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
+import { MaskedApaar } from '../components/ui/MaskedApaar';
+import { PageLoading } from '../components/ui/States';
+import { formatIST } from '../lib/format';
 import {
   User,
   ShieldAlert,
@@ -27,8 +30,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
   const [corrName, setCorrName] = useState('');
   const [corrApaar, setCorrApaar] = useState('');
   const [corrDob, setCorrDob] = useState('');
-  const [corrGender, setCorrGender] = useState('Male');
-  const [corrCategory, setCorrCategory] = useState('General');
+  const [corrGender, setCorrGender] = useState('');
   const [corrReason, setCorrReason] = useState('');
   const [savingCorr, setSavingCorr] = useState(false);
   const [corrError, setCorrError] = useState<string | null>(null);
@@ -41,10 +43,10 @@ export const StudentRecordDetailsPage: React.FC = () => {
       setStudent(data);
 
       setCorrName(data.name || '');
-      setCorrApaar(data.apaar_id || '');
+      // The full APAAR ID is never sent to the browser; leave blank to keep the current value
+      setCorrApaar('');
       setCorrDob(data.date_of_birth ? data.date_of_birth.substring(0, 10) : '');
-      setCorrGender(data.gender || 'Male');
-      setCorrCategory(data.category || 'General');
+      setCorrGender(data.gender || '');
     } catch (err) {
       console.error('Error fetching student record:', err);
     } finally {
@@ -69,10 +71,10 @@ export const StudentRecordDetailsPage: React.FC = () => {
     try {
       await studentsApi.correct(id, {
         name: corrName,
-        apaar_id: corrApaar,
-        date_of_birth: corrDob || null,
-        gender: corrGender,
-        category: corrCategory,
+        // Only send fields the user actually filled in, so blanks never overwrite stored values
+        apaar_id: corrApaar.trim() || undefined,
+        date_of_birth: corrDob || undefined,
+        gender: corrGender || undefined,
         reason: corrReason,
       });
       setIsModalOpen(false);
@@ -86,11 +88,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-600" />
-      </div>
-    );
+    return <PageLoading label="Loading student record…" />;
   }
 
   if (!student) {
@@ -135,7 +133,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm shadow-blue-500/20 transition cursor-pointer"
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Certificate Preview</span>
+            <span>Prototype Record</span>
           </button>
         </div>
       </div>
@@ -146,10 +144,10 @@ export const StudentRecordDetailsPage: React.FC = () => {
           <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-xs font-bold text-amber-900 uppercase tracking-wide">
-              Potential Duplicate Enrollment Flagged
+              Possible Duplicate Enrolment — Review Required
             </h3>
             <p className="text-xs text-slate-700 mt-0.5 leading-relaxed font-medium">
-              {student.remarks || 'This APAAR ID matches another active student registration in the AICTE system.'}
+              {student.remarks || 'This APAAR ID matches another active student record in the prototype database. This needs human review; it is not proof of a duplicate.'}
             </p>
           </div>
         </div>
@@ -171,12 +169,18 @@ export const StudentRecordDetailsPage: React.FC = () => {
             </div>
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 mt-1.5 font-medium">
               <span>
-                APAAR ID: <strong className="font-mono text-blue-700">{student.apaar_id || 'Not Assigned'}</strong>
+                APAAR ID:{' '}
+                <MaskedApaar
+                  studentId={student.id}
+                  masked={student.apaar_masked}
+                  status={student.apaar_status}
+                  canReveal={student.can_reveal_apaar}
+                />
               </span>
               <span>·</span>
               <span>Roll No: <strong className="text-slate-800">{student.institute_roll_no || 'N/A'}</strong></span>
               <span>·</span>
-              <span>Institution: <strong className="text-slate-800">{student.institution_name || 'AICTE College'}</strong></span>
+              <span>Institution: <strong className="text-slate-800">{student.institution_name || 'Institution'}</strong></span>
             </div>
           </div>
         </div>
@@ -343,12 +347,12 @@ export const StudentRecordDetailsPage: React.FC = () => {
                       </span>
                     )}
                     <span className="text-slate-400 text-[11px] font-medium">
-                      {ver.updated_at ? new Date(ver.updated_at).toLocaleString() : ''}
+                      {formatIST(ver.updated_at)}
                     </span>
                   </div>
                   <p className="text-xs text-slate-700 mt-1 font-medium">
                     Student Name: <strong className="text-slate-900">{ver.name}</strong> · APAAR ID:{' '}
-                    <strong className="font-mono text-blue-700">{ver.apaar_id || 'N/A'}</strong>
+                    <strong className="font-mono text-blue-700">{ver.apaar_masked}</strong>
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5 italic">{ver.remarks || 'Initial upload version'}</p>
                 </div>
@@ -362,7 +366,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Submit Student Record Correction">
         <form onSubmit={handleCorrectionSubmit} className="space-y-4">
           <p className="text-xs text-slate-500 font-medium">
-            Corrections create a new immutable version in accordance with AICTE audit trail requirements. The original record remains preserved.
+            Corrections create a new version with your reason recorded in the audit trail. The original record remains preserved.
           </p>
 
           {corrError && (
@@ -383,13 +387,17 @@ export const StudentRecordDetailsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">APAAR ID (12 Digits)</label>
+            <label htmlFor="corr-apaar" className="block text-xs font-semibold text-slate-700 mb-1">
+              New APAAR ID (12 digits) — leave blank to keep {student.apaar_masked}
+            </label>
             <input
+              id="corr-apaar"
               type="text"
+              inputMode="numeric"
               value={corrApaar}
               onChange={(e) => setCorrApaar(e.target.value)}
-              placeholder="e.g. 240000000001"
-              maxLength={12}
+              placeholder="Leave blank to keep the current value"
+              maxLength={14}
               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
             />
           </div>
@@ -411,6 +419,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
                 onChange={(e) => setCorrGender(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
               >
+                <option value="">Not recorded</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
@@ -427,7 +436,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
               onChange={(e) => setCorrReason(e.target.value)}
               required
               rows={3}
-              placeholder="Provide justification rationale (e.g. Verified with DigiLocker 10th marksheet certificate #CBSE-2022-9988)"
+              placeholder="Provide justification rationale (e.g. Corrected spelling after checking the admission form)"
               className="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
             />
           </div>

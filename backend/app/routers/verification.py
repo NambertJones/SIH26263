@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.services.privacy import mask_apaar
 from app.database import get_db
 from app.models.user import User
 from app.models.verification import VerificationCase, CaseEvent
@@ -14,7 +15,8 @@ from app.schemas.verification import (
     ClarificationRequest,
 )
 from app.middleware.auth import get_current_user
-from app.middleware.tenant import get_effective_institution_id, require_central_user
+from app.middleware.tenant import get_effective_institution_id, require_central_user, is_central_user
+from app.models.student import Student
 from app.services.case_manager import (
     get_cases,
     assign_case,
@@ -92,7 +94,7 @@ def get_case(
         "id": case.id,
         "student_id": case.student_id,
         "student_name": case.student.name if case.student else None,
-        "student_apaar_id": case.student.apaar_id if case.student else None,
+        "student_apaar_id": mask_apaar(case.student.apaar_id) if case.student else None,
         "student_programme": case.student.programme.name if (case.student and case.student.programme) else None,
         "submission_id": case.submission_id,
         "institution_id": case.institution_id,
@@ -111,7 +113,48 @@ def get_case(
         "updated_at": case.updated_at,
         "resolved_at": case.resolved_at,
         "events": events_list,
+        "matched_records": _matched_records(db, case, current_user),
     }
+
+
+def _matched_records(db: Session, case: VerificationCase, current_user: User) -> list[dict]:
+    """Other current records sharing this student's APAAR ID, for side-by-side review.
+
+    Institution users only learn that a record exists elsewhere; the other
+    institution's name and the student's details are shown to oversight users only.
+    """
+    student = case.student
+    if case.issue_type != "duplicate_enrollment" or not student or not student.apaar_id:
+        return []
+    others = (
+        db.query(Student)
+        .filter(
+            Student.apaar_id == student.apaar_id,
+            Student.is_latest.is_(True),
+            Student.id != student.id,
+        )
+        .all()
+    )
+    central = is_central_user(current_user)
+    out = []
+    for o in others:
+        same_inst = o.institution_id == student.institution_id
+        visible = central or same_inst
+        out.append({
+            "id": o.id if visible else None,
+            "same_institution": same_inst,
+            "institution_name": (o.institution.name if o.institution else None) if visible else "Another institution (hidden)",
+            "name": o.name if visible else "Hidden",
+            "apaar_masked": mask_apaar(o.apaar_id),
+            "programme": (o.programme.name if o.programme else None) if visible else None,
+            "enrollment_status": o.enrollment_status if visible else None,
+            "enrollment_date": o.enrollment_date if visible else None,
+            "date_of_birth_matches": (o.date_of_birth == student.date_of_birth) if (o.date_of_birth and student.date_of_birth) else None,
+            "name_matches": o.name.strip().lower() == student.name.strip().lower(),
+            "row_number": o.row_number if visible else None,
+            "validation_status": o.validation_status if visible else None,
+        })
+    return out
 
 
 @router.post("/{case_id}/assign")

@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
+from app.services.privacy import mask_apaar
 from app.models.verification import VerificationCase, CaseEvent
 from app.models.student import Student
 from app.models.user import User
@@ -57,7 +58,7 @@ def get_cases(
             "id": c.id,
             "student_id": c.student_id,
             "student_name": student.name if student else None,
-            "student_apaar_id": student.apaar_id if student else None,
+            "student_apaar_id": mask_apaar(student.apaar_id) if student else None,
             "student_programme": student.programme.name if (student and student.programme) else None,
             "institution_id": c.institution_id,
             "submission_id": c.submission_id,

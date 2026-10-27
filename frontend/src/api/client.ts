@@ -131,6 +131,11 @@ export const studentsApi = {
   get: (id: string) => request<any>(`/students/${id}`),
   getCases: (id: string) => request<any[]>(`/students/${id}/cases`),
   getAuditTrail: (id: string) => request<any[]>(`/students/${id}/audit-trail`),
+  revealApaar: (id: string, reason: string) =>
+    request<{ apaar_id: string; visible_seconds: number }>(`/students/${id}/reveal-apaar`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
   correct: (id: string, data: any) =>
     request<any>(`/students/${id}/correct`, {
       method: 'PUT',
@@ -196,6 +201,20 @@ export const reportsApi = {
   getCompliance: (institutionId?: string) =>
     request<any>(`/reports/compliance${institutionId ? `?institution_id=${institutionId}` : ''}`),
   getInstitutionWise: () => request<any[]>('/reports/institution-wise'),
+  getIntakeReconciliation: (institutionId?: string) =>
+    request<{ items: any[] }>(`/reports/intake-reconciliation${institutionId ? `?institution_id=${institutionId}` : ''}`),
+};
+
+// Audit trail API (read-only)
+export const auditApi = {
+  list: (params: { action?: string; entity_type?: string; limit?: number; offset?: number } = {}) => {
+    const q = new URLSearchParams();
+    if (params.action) q.set('action', params.action);
+    if (params.entity_type) q.set('entity_type', params.entity_type);
+    if (params.limit) q.set('limit', params.limit.toString());
+    if (params.offset) q.set('offset', params.offset.toString());
+    return request<{ total: number; items: any[] }>(`/audit?${q.toString()}`);
+  },
 };
 
 // Integrations API

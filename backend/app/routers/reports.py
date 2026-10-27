@@ -14,6 +14,7 @@ from app.services.report_generator import (
     get_enrollment_by_program,
     get_discrepancy_report,
     get_compliance_report,
+    get_intake_reconciliation,
 )
 from app.services.audit_service import log_event
 
@@ -34,6 +35,17 @@ def enrollment_summary(
         "stats": stats,
         "programmes": programmes,
     }
+
+
+@router.get("/intake-reconciliation")
+def intake_reconciliation(
+    institution_id: str | None = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Per-programme intake comparison with the calculation shown."""
+    eff_id = get_effective_institution_id(current_user, institution_id)
+    return {"items": get_intake_reconciliation(db, eff_id)}
 
 
 @router.get("/discrepancy")

@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from app.services.privacy import mask_apaar
 from app.models.student import Student
 from app.models.submission import Submission
 from app.models.institution import Programme, Institution
@@ -99,8 +100,13 @@ def get_submission_status_breakdown(db: Session, institution_id: str | None = No
 
 def get_recent_activity(db: Session, institution_id: str | None = None, limit: int = 10) -> list[dict]:
     """Combined recent activity feed from audit logs and case events."""
-    audit_query = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(limit)
-    logs = audit_query.all()
+    audit_query = db.query(AuditLog)
+    if institution_id:
+        # Institution views only show actions taken by that institution's own users
+        from app.models.user import User
+        own_user_ids = db.query(User.id).filter(User.institution_id == institution_id)
+        audit_query = audit_query.filter(AuditLog.actor_id.in_(own_user_ids))
+    logs = audit_query.order_by(AuditLog.created_at.desc()).limit(limit).all()
 
     feed = []
     for log in logs:
@@ -138,7 +144,7 @@ def get_discrepancy_report(db: Session, institution_id: str | None = None) -> li
             "row_number": issue.row_number,
             "status": issue.status,
             "student_name": student.name if student else "N/A",
-            "student_apaar_id": student.apaar_id if student else "N/A",
+            "student_apaar_id": mask_apaar(student.apaar_id) if student else None,
             "created_at": issue.created_at.isoformat() if issue.created_at else None,
         })
 
@@ -179,3 +185,81 @@ def get_compliance_report(db: Session, institution_id: str | None = None) -> dic
         "open_verification_cases": stats["open_cases"],
         "programmes": programmes,
     }
+
+
+INTAKE_COUNTED_STATUSES = ["active"]
+
+
+def get_intake_reconciliation(db: Session, institution_id: str | None = None) -> list[dict]:
+    """Per-programme intake comparison with an explicit, reproducible calculation.
+
+    Reference = approved intake + supernumerary + NRI seats (the same total the
+    validation engine uses). Outcomes are review prompts, never violations.
+    """
+    from app.models.intake import IntakeReference
+
+    prog_query = db.query(Programme)
+    if institution_id:
+        prog_query = prog_query.filter(Programme.institution_id == institution_id)
+
+    rows = []
+    for p in prog_query.all():
+        ref = (
+            db.query(IntakeReference)
+            .filter(IntakeReference.programme_id == p.id, IntakeReference.academic_year == p.academic_year)
+            .order_by(IntakeReference.created_at.desc())
+            .first()
+        )
+        enrolled = db.query(Student).filter(
+            Student.programme_id == p.id,
+            Student.is_latest.is_(True),
+            Student.enrollment_status.in_(INTAKE_COUNTED_STATUSES),
+        ).count()
+        excluded = db.query(Student).filter(
+            Student.programme_id == p.id,
+            Student.is_latest.is_(True),
+            ~Student.enrollment_status.in_(INTAKE_COUNTED_STATUSES),
+        ).count()
+
+        approved = p.approved_intake or 0
+        supernumerary = p.supernumerary_seats or 0
+        nri = p.nri_seats or 0
+        reference_total = approved + supernumerary + nri
+
+        if approved <= 0:
+            outcome = "CANNOT_DETERMINE_MISSING_REFERENCE"
+        elif enrolled > reference_total:
+            outcome = "POTENTIAL_DISCREPANCY"
+        else:
+            outcome = "WITHIN_REFERENCE"
+
+        open_cases = db.query(VerificationCase).filter(
+            VerificationCase.institution_id == p.institution_id,
+            VerificationCase.issue_type == "intake_mismatch",
+            VerificationCase.status.in_(["open", "under_review", "pending"]),
+        ).count()
+
+        rows.append({
+            "programme_id": p.id,
+            "programme_code": p.code,
+            "programme_name": p.name,
+            "institution_id": p.institution_id,
+            "institution_name": p.institution.name if p.institution else None,
+            "academic_year": p.academic_year,
+            "approved_intake": approved,
+            "supernumerary_seats": supernumerary,
+            "nri_seats": nri,
+            "reference_total": reference_total,
+            "enrolled_count": enrolled,
+            "excluded_count": excluded,
+            "difference": enrolled - reference_total,
+            "counted_statuses": INTAKE_COUNTED_STATUSES,
+            "outcome": outcome,
+            "source": (ref.source if ref and ref.source else "Programme record (synthetic demo data)"),
+            "source_status": "SYNTHETIC",
+            "reference_recorded_at": (ref.created_at.isoformat() if ref and ref.created_at else (p.created_at.isoformat() if p.created_at else None)),
+            "open_intake_cases": open_cases,
+        })
+
+    rows.sort(key=lambda r: (r["outcome"] != "POTENTIAL_DISCREPANCY", r["institution_name"] or "", r["programme_code"]))
+    return rows

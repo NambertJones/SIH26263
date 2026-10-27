@@ -1,4 +1,4 @@
-# APAAR ReconX — AICTE Student Data Management & Verification Platform
+# APAAR ReconX — Student Data Validation & Reconciliation Prototype (SIH26263)
 
 > **Smart India Hackathon 2026** · Problem Statement ID: **SIH26263**  
 > **Full-Stack Working Prototype** · Python FastAPI + PostgreSQL/SQLite + React + TypeScript + Vite + Tailwind CSS
@@ -7,13 +7,15 @@
 
 ## 🌟 Executive Summary
 
-**APAAR ReconX** is an enterprise-grade reconciliation and verification platform developed for the **All India Council for Technical Education (AICTE)**. It addresses the critical challenges in managing the **Automated Permanent Academic Account Registry (APAAR)**:
-1. **Automated Discrepancy Detection**: Validates APAAR formats (12 digits), checks for intra-file duplicates and cross-institutional dual admissions.
-2. **Intake Reconciliation**: Enforces sanctioned seat quotas against institutional program capacity in real-time.
+> **Independent prototype for demonstration. Not an official AICTE or APAAR portal. Uses synthetic data and simulated verification.** It is not affiliated with, endorsed by or developed for AICTE, the Ministry of Education, APAAR, DigiLocker or AISHE.
+
+**APAAR ReconX** is a hackathon prototype for the SIH26263 problem statement (student data management and verification for AICTE-approved institutions, keyed on the APAAR ID). Its features:
+1. **Automated Data Checks**: APAAR ID format check (12 digits — format only, not identity verification), duplicate checks within a file, and flags for possible duplicate enrolments across institutions for human review.
+2. **Intake Reconciliation**: Compares enrolled counts with a demo intake reference per programme and flags potential discrepancies for review (it does not enforce quotas).
 3. **Audited Correction Workflow**: Immutable versioning preserves every historical change with mandatory justification rationale.
-4. **Adjudication Queue**: Full lifecycle case management for authorized officers with chronological event timelines.
-5. **Simulated Registry Connectors**: Safe demonstration adapters for APAAR NDEAR, DigiLocker NAD, AICTE EoA, and AISHE.
-6. **Statutory Reporting & Certificates**: Exportable discrepancy audits, compliance ratings, and verifiable QR-coded enrollment certificates.
+4. **Review Queue**: Case management for oversight reviewers (demo role) with chronological event timelines.
+5. **Simulated Registry Connectors**: Local mock adapters standing in for APAAR, DigiLocker / NAD, AICTE approval and AISHE lookups. No government system is connected.
+6. **Reports & Prototype Records**: Exportable discrepancy lists, a data-quality summary (counts only, no compliance score), and QR-coded prototype enrolment records marked "not an official document".
 
 ---
 
@@ -21,18 +23,18 @@
 
 | Screen # | Screen Name | Route | Core Functionality |
 |---|---|---|---|
-| **Screen 1** | **Login Portal** | `/login` | AICTE branded portal with 1-click demo role switcher (Admin, Staff, Reviewer) |
+| **Screen 1** | **Login Portal** | `/login` | Prototype login with disclaimer and 1-click demo role switcher (Admin, Staff, Oversight Reviewer) |
 | **Screen 2** | **Institution Dashboard** | `/dashboard` | 4 metric stat cards, Enrollment vs Intake capacity bars, status donut chart, recent audit feed |
 | **Screen 3** | **Student Data Upload** | `/upload` | 4-step wizard, drag-and-drop CSV/XLSX upload, schema checklist, downloadable test CSV template |
 | **Screen 4** | **Column Mapping** | `/mapping` | Auto-detected header matching, schema dropdown selectors, live 3-row sample preview |
 | **Screen 5** | **Validation Results** | `/validation` | Real-time deterministic rule engine results, severity tabs, APAAR format & duplicate counters, batch finalization |
 | **Screen 6** | **Student Record Details** | `/students/:id` | Student profile, cross-institution duplicate alert banner, issue breakdown, audit version history, correction modal |
 | **Screen 7** | **Verification Cases** | `/cases` | Adjudication queue, priority badges (Critical, High, Medium), timeline comments, assign, resolve & reject |
-| **Screen 8** | **Reports & Analytics** | `/reports` | Sanctioned vs actual utilization table, full discrepancy audit, AICTE compliance score (out of 100), CSV export |
-| **Screen 9** | **External Integrations** | `/integrations` | APAAR, DigiLocker, AICTE, AISHE simulated cards with interactive live query testing modal |
+| **Screen 8** | **Reports & Analytics** | `/reports` | Demo intake reference vs enrolled table, discrepancy list, data-quality summary (counts only), CSV export |
+| **Screen 9** | **External Integrations** | `/integrations` | APAAR, DigiLocker, AICTE, AISHE mock adapter cards with a simulated test modal (results labelled SIMULATED) |
 | **Screen 10** | **User Management** | `/users` | Role-based access control (RBAC), multi-tab user directory, new account creation modal |
-| **Screen 11** | **Institution Settings** | `/settings` | AICTE permanent ID profile, programme sanctioned intake seat matrix, academic calendar, security settings |
-| **Screen 12** | **Certificate Preview** | `/certificate` | Official AICTE Student Enrollment Certificate layout, digital QR code verification, PDF print layout |
+| **Screen 11** | **Institution Settings** | `/settings` | Demo institution profile, programme intake reference (synthetic), demo calendar dates, security notes |
+| **Screen 12** | **Certificate Preview** | `/certificate` | Prototype enrolment record (marked not an official document), QR link to the prototype record check, PDF print layout |
 
 ---
 
@@ -42,7 +44,7 @@
 |---|---|---|---|
 | **College Administrator** | `admin@college.edu.in` | `admin123` | Institutional uploads, settings, staff management, compliance |
 | **Admissions Staff** | `staff@college.edu.in` | `staff123` | Batch upload, column mapping, record correction |
-| **AICTE Verification Officer** | `officer1@aicte.gov.in` | `officer123` | Central review queue, cross-institutional dispute adjudication, compliance |
+| **Oversight Reviewer (demo)** | `officer1@aicte.gov.in` | `officer123` | Central review queue, cross-institutional dispute adjudication, compliance |
 
 *Note: You can also use the one-click quick-login buttons on the login screen or in the top navigation bar to switch roles instantly.*
 
@@ -99,7 +101,7 @@ npm run dev
    ├── DATE_INCONSIST     : Enrollment date before DOB / in the future
    ├── FMT_GENDER/EMAIL   : Format warnings
    ├── DUP_APAAR_SAME     : Intra-file duplicate APAAR detection
-   ├── DUP_APAAR_CROSS    : Possible cross-institution active enrollment (sent for AICTE review)
+   ├── DUP_APAAR_CROSS    : Possible cross-institution active enrollment (sent for oversight review)
    └── INTAKE_EXCEED      : Cumulative check against approved + supernumerary/NRI seats,
                             counting all finalized submissions for the programme
          ↓
@@ -116,8 +118,8 @@ npm run dev
 |---|---|
 | College Admin (`admin` + institution) | Own institution only: data, settings, staff accounts |
 | Admissions Staff (`institution_user`) | Own institution only: upload, map, correct records, comment on cases |
-| AICTE Verification Officer (`reviewer`) | All institutions; **only role that can assign, resolve or reject verification cases** |
-| AICTE Admin (`admin`, no institution) | Platform-wide administration |
+| Oversight Reviewer, demo (`reviewer`) | All institutions; **only role that can assign, resolve or reject verification cases** |
+| Oversight Admin, demo (`admin`, no institution) | Platform-wide administration |
 
 - APAAR IDs are masked (`1234-****-9012`) in list views, case queues and reports; the full ID is shown only on the authorised record detail page and on the certificate.
 - Certificate QR codes carry only the certificate number. `GET /api/public/verify/{certificate_id}` (UI: `/verify/:id`) lets employers/regulators verify without logging in and returns only masked APAAR, name, institution, programme and status.

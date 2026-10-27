@@ -122,7 +122,7 @@ def add_programme(
         approved_intake=request.approved_intake,
         supernumerary_quota=request.supernumerary_seats,
         nri_quota=request.nri_seats,
-        source="Institution Sanction Letter",
+        source="Entered by institution admin (unverified)",
     )
     db.add(intake_ref)
     db.commit()

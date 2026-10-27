@@ -76,7 +76,7 @@ def get_certificate_preview(
         "disclaimer": "This is a prototype certificate for demo purposes. Not valid for legal or statutory certification.",
         "student": {
             "name": student.name,
-            "apaar_id": student.apaar_id or "N/A",
+            "apaar_id": mask_apaar(student.apaar_id),
             "apaar_id_masked": mask_apaar(student.apaar_id),
             "roll_no": student.institute_roll_no or "N/A",
             "dob": student.date_of_birth.isoformat() if student.date_of_birth else "N/A",

@@ -40,28 +40,28 @@ def seed_database(db: Session):
 
     print("[SEED] Seeding institutions...")
     inst1 = Institution(
-        aicte_id="1-1234567B",
-        name="St. Joseph's College of Engineering",
-        address="OMR, Kamraj Nagar, Semmancheri",
+        aicte_id="DEMO-INST-A",
+        name="Demo Institute of Technology A",
+        address="1 Demo Campus Road (synthetic)",
         city="Chennai",
         state="Tamil Nadu",
         type="Self-Financing",
         status="active",
     )
     inst2 = Institution(
-        aicte_id="1-9876543A",
-        name="ABC Institute of Technology",
-        address="Electronic City Phase 1",
-        city="Bangalore",
+        aicte_id="DEMO-INST-B",
+        name="Demo Institute of Technology B",
+        address="2 Demo Campus Road (synthetic)",
+        city="Bengaluru",
         state="Karnataka",
         type="Private Autonomous",
         status="active",
     )
     inst3 = Institution(
-        aicte_id="1-5544332C",
-        name="National Engineering College",
-        address="K.R. Nagar, Nalattinputhur",
-        city="Kovilpatti",
+        aicte_id="DEMO-INST-C",
+        name="Demo Institute of Technology C",
+        address="3 Demo Campus Road (synthetic)",
+        city="Madurai",
         state="Tamil Nadu",
         type="Government Aided",
         status="active",
@@ -120,7 +120,7 @@ def seed_database(db: Session):
         institution_id=None,
         email="officer1@aicte.gov.in",
         password_hash=hash_password("officer123"),
-        name="Shri R. K. Verma (AICTE Officer)",
+        name="Demo Oversight Reviewer",
         role="reviewer",
         status="active",
     )
@@ -132,7 +132,7 @@ def seed_database(db: Session):
     aiml_prog_inst1 = next(p for p in all_progs if p.institution_id == inst1.id and p.code == "AIML")
     cse_prog_inst2 = next(p for p in all_progs if p.institution_id == inst2.id and p.code == "CSE")
 
-    # Cross-institution students at ABC Institute (to trigger cross-duplicate)
+    # Cross-institution students at Demo Institute B (to trigger cross-duplicate)
     cross_students = []
     shared_apaars = ["998877665544", "887766554433", "776655443322"]
     for i, apaar in enumerate(shared_apaars):
@@ -154,7 +154,7 @@ def seed_database(db: Session):
     db.add_all(cross_students)
     db.flush()
 
-    # Submission 1: CSE batch at St. Joseph's (115 students - valid intake)
+    # Submission 1: CSE batch at Demo Institute A (115 students - valid intake)
     sub1 = Submission(
         institution_id=inst1.id,
         uploaded_by=staff_user.id,
@@ -195,7 +195,7 @@ def seed_database(db: Session):
             # Cross-institution duplicate
             apaar = shared_apaars[0]
             status = "duplicate"
-            remarks = "Cross-institution duplicate: actively enrolled at ABC Institute of Technology"
+            remarks = "Possible cross-institution duplicate — review required: same APAAR ID has an active record at Demo Institute of Technology B"
         elif i == 25:
             # Format error (10 digits)
             apaar = "1234567890"
@@ -283,7 +283,7 @@ def seed_database(db: Session):
             status=case_status,
             assigned_to=officer_user.id if case_status != "open" else None,
             priority="high" if issue_type == "duplicate_enrollment" else "medium",
-            resolution_reason="Candidate provided verified DigiLocker Aadhaar eKYC certificate." if case_status == "resolved" else None,
+            resolution_reason="Reviewer checked supporting documents provided by the institution (demo)." if case_status == "resolved" else None,
             resolved_by=officer_user.id if case_status == "resolved" else None,
             resolved_at=datetime.utcnow() - timedelta(hours=5) if case_status == "resolved" else None,
         )
@@ -303,7 +303,7 @@ def seed_database(db: Session):
                 case_id=vc.id,
                 actor_id=admin_user.id,
                 event_type="assigned",
-                description=f"Assigned to {officer_user.name} for official AICTE verification.",
+                description=f"Assigned to {officer_user.name} for oversight review (demo).",
             )
             db.add(ev2)
 
@@ -312,7 +312,7 @@ def seed_database(db: Session):
                 case_id=vc.id,
                 actor_id=officer_user.id,
                 event_type="resolved",
-                description="Verified via DigiLocker. Reconciled and approved.",
+                description="Reviewed and resolved by oversight reviewer (demo).",
             )
             db.add(ev3)
 
@@ -331,8 +331,8 @@ def seed_database(db: Session):
         ("upload", "File CSE_2025_Admissions_Final.csv uploaded successfully."),
         ("map_columns", "Column mapping auto-configured and approved."),
         ("validate", "Validation engine completed: 115 records processed."),
-        ("case_assigned", "Verification case assigned to Shri R. K. Verma."),
-        ("case_resolved", "Case resolved with DigiLocker proof."),
+        ("case_assigned", "Verification case assigned to Demo Oversight Reviewer."),
+        ("case_resolved", "Case resolved after document review (demo)."),
     ]:
         log_entry = AuditLog(
             action=action,

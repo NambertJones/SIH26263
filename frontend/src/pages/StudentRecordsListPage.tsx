@@ -1,147 +1,191 @@
-import { maskApaar } from '../lib/privacy';
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { studentsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
+import { ApaarStatusBadge } from '../components/ui/MaskedApaar';
+import { Pagination } from '../components/ui/Pagination';
+import { EmptyState, ErrorBanner, SkeletonRows } from '../components/ui/States';
+import { useAuth } from '../contexts/AuthContext';
 import { Users, Search, FileSpreadsheet } from 'lucide-react';
 
+const PAGE_SIZE = 25;
+
+const TABS = [
+  { id: 'all', label: 'All records' },
+  { id: 'valid', label: 'Passing checks' },
+  { id: 'pending,warning', label: 'Pending / warnings' },
+  { id: 'invalid,duplicate', label: 'Issues' },
+  { id: 'duplicate', label: 'Possible duplicates' },
+  { id: 'invalid', label: 'Invalid data' },
+];
+
 export const StudentRecordsListPage: React.FC = () => {
-  const [students, setStudents] = useState<any[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+  const status = params.get('status') || 'all';
+  const page = Number(params.get('page') || '1');
+  const q = params.get('q') || '';
+
+  const [searchInput, setSearchInput] = useState(q);
+  const [data, setData] = useState<{ total: number; items: any[] }>({ total: 0, items: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const update = (next: Record<string, string | null>) => {
+    const p = new URLSearchParams(params);
+    Object.entries(next).forEach(([k, v]) => (v ? p.set(k, v) : p.delete(k)));
+    setParams(p, { replace: true });
+  };
+
+  // Debounced search: wait until typing pauses before querying
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (searchInput !== q) update({ q: searchInput.trim() || null, page: null });
+    }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await studentsApi.list({
+        validation_status: status === 'all' ? undefined : status,
+        search: q || undefined,
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+      });
+      setData(res);
+    } catch (err: any) {
+      setError(err.message || 'Request failed');
+    } finally {
+      setLoading(false);
+    }
+  }, [status, q, page]);
 
   useEffect(() => {
-    async function loadStudents() {
-      try {
-        setLoading(true);
-        const data = await studentsApi.list({
-          validation_status: statusFilter === 'all' ? undefined : statusFilter,
-          search: search.trim() || undefined,
-          limit: 100,
-        });
-        setStudents(data.items);
-        setTotalCount(data.total);
-      } catch (err) {
-        console.error('Error fetching students:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadStudents();
-  }, [statusFilter, search]);
+    load();
+  }, [load]);
+
+  const knownTab = TABS.some((t) => t.id === status);
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Header */}
+    <div className="space-y-5 max-w-6xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
-            <span>Master Student Directory & Verification Records</span>
+            <Users className="w-5 h-5 text-blue-600" aria-hidden="true" />
+            <span>Student Records</span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
-            Comprehensive institutional registry of all enrolled students with APAAR reconciliation states.
+          <p className="text-xs text-slate-600 mt-1">
+            Synthetic student records with data-check status. APAAR IDs are masked; status shows the format check only, not identity
+            verification.
           </p>
         </div>
 
-        <button
-          onClick={() => navigate('/upload')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm shadow-blue-500/20 transition cursor-pointer"
-        >
-          <FileSpreadsheet className="w-3.5 h-3.5" />
-          <span>Upload New Batch</span>
-        </button>
+        {user?.role !== 'reviewer' && user?.institution_id && (
+          <button
+            onClick={() => navigate('/upload')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm transition"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Upload New Batch</span>
+          </button>
+        )}
       </div>
 
-      {/* Filter Tabs & Search */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 text-xs">
-          {[
-            { id: 'all', label: `All Students (${totalCount})` },
-            { id: 'valid', label: 'Valid Records' },
-            { id: 'duplicate', label: 'Duplicates' },
-            { id: 'invalid', label: 'Invalid Format' },
-            { id: 'warning', label: 'Warnings' },
-          ].map((tab) => (
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0 text-xs" role="group" aria-label="Filter by status">
+          {TABS.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap cursor-pointer ${
-                statusFilter === tab.id
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+              type="button"
+              aria-pressed={status === tab.id}
+              onClick={() => update({ status: tab.id === 'all' ? null : tab.id, page: null })}
+              className={`px-3 py-1.5 rounded-lg font-semibold transition whitespace-nowrap ${
+                status === tab.id ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:text-slate-900 hover:bg-slate-200/70'
               }`}
             >
               {tab.label}
             </button>
           ))}
+          {!knownTab && (
+            <span className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold whitespace-nowrap">Filter: {status}</span>
+          )}
         </div>
 
-        <div className="relative w-full md:w-72">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+        <div className="relative w-full lg:w-72">
+          <label htmlFor="student-search" className="sr-only">
+            Search students
+          </label>
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" aria-hidden="true" />
           <input
-            type="text"
-            placeholder="Search student, APAAR ID, roll..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
+            id="student-search"
+            type="search"
+            placeholder="Name, roll no or last 4 APAAR digits"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-500 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
           />
         </div>
       </div>
 
-      {/* Table */}
+      {error && <ErrorBanner message={error} onRetry={load} />}
+
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
+            <caption className="sr-only">Student records</caption>
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
-                <th className="py-3 px-4 font-bold">Roll No</th>
-                <th className="py-3 px-4 font-bold">Student Name</th>
-                <th className="py-3 px-4 font-bold">APAAR ID</th>
-                <th className="py-3 px-4 font-bold">Programme</th>
-                <th className="py-3 px-4 font-bold">Gender / Category</th>
-                <th className="py-3 px-4 font-bold">Status</th>
-                <th className="py-3 px-4 font-bold text-right">Inspect</th>
+              <tr className="border-b border-slate-200 bg-slate-50 text-slate-700">
+                <th scope="col" className="py-3 px-4 font-bold">Roll No</th>
+                <th scope="col" className="py-3 px-4 font-bold">Student Name</th>
+                <th scope="col" className="py-3 px-4 font-bold">APAAR ID</th>
+                <th scope="col" className="py-3 px-4 font-bold">Programme</th>
+                <th scope="col" className="py-3 px-4 font-bold">Enrolment</th>
+                <th scope="col" className="py-3 px-4 font-bold">Check status</th>
+                <th scope="col" className="py-3 px-4 font-bold text-right">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
+                <SkeletonRows cols={7} rows={8} />
+              ) : data.items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">
-                    Loading student records...
-                  </td>
-                </tr>
-              ) : students.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-slate-500 font-medium">
-                    No students found matching current filter.
+                  <td colSpan={7}>
+                    <EmptyState
+                      title="No records match this filter"
+                      hint={q ? 'Try a different search term or clear the search.' : 'Choose another status filter.'}
+                    />
                   </td>
                 </tr>
               ) : (
-                students.map((st) => (
+                data.items.map((st) => (
                   <tr key={st.id} className="hover:bg-slate-50/70 transition">
-                    <td className="py-3 px-4 font-mono text-slate-400 font-medium">{st.institute_roll_no || '-'}</td>
+                    <td className="py-3 px-4 font-mono text-slate-600">{st.institute_roll_no || '—'}</td>
                     <td className="py-3 px-4 font-semibold text-slate-900">{st.name}</td>
-                    <td className="py-3 px-4 font-mono text-blue-700 font-semibold">
-                      {maskApaar(st.apaar_id) || <span className="text-rose-600 font-sans italic font-medium">Missing</span>}
+                    <td className="py-3 px-4">
+                      <div className="flex flex-col gap-1">
+                        <span className="font-mono text-blue-800 font-semibold">{st.apaar_masked}</span>
+                        <ApaarStatusBadge status={st.apaar_status} />
+                      </div>
                     </td>
-                    <td className="py-3 px-4 text-slate-600 font-medium">{st.programme_name || 'CSE'}</td>
-                    <td className="py-3 px-4 text-slate-600 font-medium">
-                      {st.gender} ({st.category || 'General'})
-                    </td>
+                    <td className="py-3 px-4 text-slate-700">{st.programme_name || '—'}</td>
+                    <td className="py-3 px-4 text-slate-700 capitalize">{st.enrollment_status || '—'}</td>
                     <td className="py-3 px-4">
                       <StatusBadge status={st.validation_status} size="sm" />
                     </td>
                     <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => navigate(`/students/${st.id}`)}
-                        className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded font-semibold text-xs transition cursor-pointer"
+                      <Link
+                        to={`/students/${st.id}`}
+                        className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 rounded font-semibold text-xs transition whitespace-nowrap"
                       >
-                        Inspect Record →
-                      </button>
+                        View record<span className="sr-only"> for {st.name}</span>
+                      </Link>
                     </td>
                   </tr>
                 ))
@@ -149,6 +193,7 @@ export const StudentRecordsListPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onPageChange={(p) => update({ page: String(p) })} />
       </div>
     </div>
   );

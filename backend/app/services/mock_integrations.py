@@ -18,10 +18,12 @@ class MockIntegrations:
                 "service": "APAAR",
                 "apaar_id": apaar_id,
                 "status": "INVALID_FORMAT",
-                "message": "APAAR ID must be exactly 12 numeric digits",
+                "message": "SIMULATED: APAAR ID must be exactly 12 numeric digits (format check only)",
                 "verified": False,
                 "timestamp": datetime.utcnow().isoformat(),
                 "simulated": True,
+                "data_mode": "DEMO_MOCK",
+                "notice": "Simulated response from a local mock adapter. Not an official result.",
             }
 
         # Deterministic simulation based on last digit
@@ -31,32 +33,37 @@ class MockIntegrations:
                 "service": "APAAR",
                 "apaar_id": clean_id,
                 "status": "NOT_FOUND",
-                "message": "APAAR ID not registered in central DigiLocker/NDEAR repository",
+                "message": "SIMULATED: demo rule returns not-found for IDs ending in 9. No registry was contacted.",
                 "verified": False,
                 "timestamp": datetime.utcnow().isoformat(),
                 "simulated": True,
+                "data_mode": "DEMO_MOCK",
+                "notice": "Simulated response from a local mock adapter. Not an official result.",
             }
         elif last_digit == 8:
             return {
                 "service": "APAAR",
                 "apaar_id": clean_id,
                 "status": "FLAGGED",
-                "message": "APAAR ID flagged for multiple active enrollments in current academic year",
+                "message": "SIMULATED: demo rule flags IDs ending in 8 as a possible multiple enrolment. No registry was contacted.",
                 "verified": True,
                 "cross_enrollment_detected": True,
                 "timestamp": datetime.utcnow().isoformat(),
                 "simulated": True,
+                "data_mode": "DEMO_MOCK",
+                "notice": "Simulated response from a local mock adapter. Not an official result.",
             }
 
         return {
             "service": "APAAR",
             "apaar_id": clean_id,
             "status": "ACTIVE_VERIFIED",
-            "message": "APAAR ID is verified and active with UIDAI biometric linkage",
+            "message": "SIMULATED: demo rule returns a match. This is not verification by the APAAR registry.",
             "verified": True,
-            "kyc_status": "COMPLETED",
             "timestamp": datetime.utcnow().isoformat(),
             "simulated": True,
+            "data_mode": "DEMO_MOCK",
+            "notice": "Simulated response from a local mock adapter. Not an official result.",
         }
 
     @staticmethod
@@ -80,10 +87,11 @@ class MockIntegrations:
                     "verified": True,
                 },
             ],
-            "aadhaar_linked": True,
             "verified": True,
             "timestamp": datetime.utcnow().isoformat(),
             "simulated": True,
+            "data_mode": "DEMO_MOCK",
+            "notice": "Simulated response from a local mock adapter. Not an official result.",
         }
 
     @staticmethod
@@ -99,6 +107,8 @@ class MockIntegrations:
             "complaint_status": "CLEARED",
             "timestamp": datetime.utcnow().isoformat(),
             "simulated": True,
+            "data_mode": "DEMO_MOCK",
+            "notice": "Simulated response from a local mock adapter. Not an official result.",
         }
 
     @staticmethod
@@ -112,4 +122,6 @@ class MockIntegrations:
             "survey_submitted": True,
             "timestamp": datetime.utcnow().isoformat(),
             "simulated": True,
+            "data_mode": "DEMO_MOCK",
+            "notice": "Simulated response from a local mock adapter. Not an official result.",
         }

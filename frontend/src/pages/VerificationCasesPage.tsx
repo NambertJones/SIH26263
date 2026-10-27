@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
+import { Pagination } from '../components/ui/Pagination';
+import { EmptyState, ErrorBanner, SkeletonRows } from '../components/ui/States';
 import { casesApi, usersApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
@@ -21,12 +24,18 @@ import {
 export const VerificationCasesPage: React.FC = () => {
   const { user } = useAuth();
   const canDecide = isCentralUser(user);
+  const { notify } = useToast();
+  const [params, setParams] = useSearchParams();
+  const PAGE_SIZE = 20;
   const [cases, setCases] = useState<any[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [issueTypeFilter, setIssueTypeFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [issueTypeFilter, setIssueTypeFilter] = useState(params.get('type') || 'all');
+  const [statusFilter, setStatusFilter] = useState(params.get('status') || 'all');
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
 
   // Review Modal State
   const [selectedCase, setSelectedCase] = useState<any>(null);
@@ -38,27 +47,49 @@ export const VerificationCasesPage: React.FC = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fetchCases = async () => {
+  const fetchCases = useCallback(async () => {
     try {
       setLoading(true);
+      setListError(null);
       const res = await casesApi.list({
         issue_type: issueTypeFilter === 'all' ? undefined : issueTypeFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
         search: search.trim() || undefined,
-        limit: 100,
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
       });
       setCases(res.items);
       setTotalCount(res.total);
-    } catch (err) {
-      console.error('Error fetching verification cases:', err);
+    } catch (err: any) {
+      setListError(err.message || 'Request failed');
     } finally {
       setLoading(false);
     }
-  };
+  }, [issueTypeFilter, statusFilter, search, page]);
 
   useEffect(() => {
     fetchCases();
-  }, [issueTypeFilter, statusFilter, search]);
+  }, [fetchCases]);
+
+  // Debounced search
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  // Keep filters in the URL so views can be shared and linked from other screens
+  useEffect(() => {
+    const p = new URLSearchParams(params);
+    if (issueTypeFilter === 'all') p.delete('type');
+    else p.set('type', issueTypeFilter);
+    if (statusFilter === 'all') p.delete('status');
+    else p.set('status', statusFilter);
+    setParams(p, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [issueTypeFilter, statusFilter]);
 
   useEffect(() => {
     async function loadReviewers() {
@@ -78,10 +109,17 @@ export const VerificationCasesPage: React.FC = () => {
       setCaseModalOpen(true);
       setActionReason('');
       setNewComment('');
-    } catch (err) {
-      console.error('Error fetching case detail:', err);
+    } catch (err: any) {
+      notify(err.message || 'Could not open this case', 'error');
     }
   };
+
+  // Open a case directly when linked with ?case=<id> (e.g. from Duplicate Review)
+  useEffect(() => {
+    const caseId = params.get('case');
+    if (caseId) openCaseDetails({ id: caseId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleAddComment = async () => {
     if (!selectedCase || !newComment.trim()) return;
@@ -93,7 +131,7 @@ export const VerificationCasesPage: React.FC = () => {
       setNewComment('');
       fetchCases();
     } catch (err: any) {
-      alert(err.message || 'Failed to add comment');
+      notify(err.message || 'Failed to add comment', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -108,7 +146,7 @@ export const VerificationCasesPage: React.FC = () => {
       setSelectedCase(refreshed);
       fetchCases();
     } catch (err: any) {
-      alert(err.message || 'Failed to assign case');
+      notify(err.message || 'Failed to assign case', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -116,16 +154,17 @@ export const VerificationCasesPage: React.FC = () => {
 
   const handleResolve = async () => {
     if (!selectedCase || !actionReason.trim()) {
-      alert('A justification reason is mandatory to resolve a discrepancy.');
+      notify('Enter a reason before resolving the case.', 'error');
       return;
     }
     setActionLoading(true);
     try {
       await casesApi.resolve(selectedCase.id, actionReason);
       setCaseModalOpen(false);
+      notify('Case resolved. The decision and reason were recorded in the case history.', 'success');
       fetchCases();
     } catch (err: any) {
-      alert(err.message || 'Failed to resolve case');
+      notify(err.message || 'Failed to resolve case', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -133,16 +172,17 @@ export const VerificationCasesPage: React.FC = () => {
 
   const handleReject = async () => {
     if (!selectedCase || !actionReason.trim()) {
-      alert('A rejection reason is mandatory.');
+      notify('Enter a reason before dismissing the case.', 'error');
       return;
     }
     setActionLoading(true);
     try {
       await casesApi.reject(selectedCase.id, actionReason);
       setCaseModalOpen(false);
+      notify('Case dismissed. The reason was recorded in the case history.', 'success');
       fetchCases();
     } catch (err: any) {
-      alert(err.message || 'Failed to reject case');
+      notify(err.message || 'Failed to dismiss case', 'error');
     } finally {
       setActionLoading(false);
     }
@@ -154,10 +194,10 @@ export const VerificationCasesPage: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold text-slate-900 tracking-wide flex items-center gap-2">
           <AlertOctagon className="w-5 h-5 text-blue-600" />
-          <span>Verification & Discrepancy Review Queue</span>
+          <span>Cases</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Review, assign, and adjudicate student data discrepancies with full timeline audit logging.
+          Review, assign and decide flagged records. Every action is recorded in the case timeline. A flag is a reason to review, not a finding.
         </p>
       </div>
 
@@ -169,11 +209,15 @@ export const VerificationCasesPage: React.FC = () => {
             { id: 'all', label: 'All Cases' },
             { id: 'duplicate_enrollment', label: 'Duplicates' },
             { id: 'invalid_data', label: 'Invalid Data' },
-            { id: 'intake_mismatch', label: 'Intake Exceeded' },
+            { id: 'intake_mismatch', label: 'Intake Discrepancy' },
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setIssueTypeFilter(tab.id)}
+              onClick={() => {
+                setIssueTypeFilter(tab.id);
+                setPage(1);
+              }}
+              aria-pressed={issueTypeFilter === tab.id}
               className={`px-3 py-1.5 rounded-lg font-medium transition whitespace-nowrap cursor-pointer ${
                 issueTypeFilter === tab.id
                   ? 'bg-blue-600 text-white font-semibold shadow-xs'
@@ -189,7 +233,11 @@ export const VerificationCasesPage: React.FC = () => {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
+            aria-label="Filter by status"
             className="bg-white border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs cursor-pointer"
           >
             <option value="all">Status: All</option>
@@ -197,21 +245,24 @@ export const VerificationCasesPage: React.FC = () => {
             <option value="under_review">Under Review</option>
             <option value="pending">Pending</option>
             <option value="resolved">Resolved</option>
-            <option value="rejected">Rejected</option>
+            <option value="rejected">Dismissed</option>
           </select>
 
           <div className="relative flex-1 md:w-60">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" aria-hidden="true" />
             <input
-              type="text"
+              type="search"
+              aria-label="Search cases"
               placeholder="Search case, student..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="w-full bg-white border border-slate-300 rounded-lg pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
             />
           </div>
         </div>
       </div>
+
+      {listError && <ErrorBanner message={listError} onRetry={fetchCases} />}
 
       {/* Cases Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
@@ -231,15 +282,11 @@ export const VerificationCasesPage: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {loading ? (
-                <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
-                    Loading verification queue...
-                  </td>
-                </tr>
+                <SkeletonRows cols={8} />
               ) : cases.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-8 text-center text-slate-400">
-                    No verification cases found matching criteria.
+                  <td colSpan={8}>
+                    <EmptyState title="No cases match these filters" hint="Change the type or status filter." />
                   </td>
                 </tr>
               ) : (
@@ -271,7 +318,7 @@ export const VerificationCasesPage: React.FC = () => {
                         onClick={() => openCaseDetails(c)}
                         className="px-3 py-1 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 rounded font-semibold text-xs transition cursor-pointer"
                       >
-                        Adjudicate
+                        Review<span className="sr-only"> case for {c.student_name}</span>
                       </button>
                     </td>
                   </tr>
@@ -280,10 +327,11 @@ export const VerificationCasesPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        <Pagination page={page} pageSize={PAGE_SIZE} total={totalCount} onPageChange={setPage} />
       </div>
 
       {/* Adjudication & Case Review Modal */}
-      <Modal isOpen={caseModalOpen} onClose={() => setCaseModalOpen(false)} title="Case Review & Adjudication" maxWidth="2xl">
+      <Modal isOpen={caseModalOpen} onClose={() => setCaseModalOpen(false)} title="Case Review" maxWidth="2xl">
         {selectedCase && (
           <div className="space-y-6 text-xs">
             {/* Header Summary */}
@@ -395,7 +443,7 @@ export const VerificationCasesPage: React.FC = () => {
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 flex items-start gap-2">
                 <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>
-                  This case is decided by an AICTE verification officer. Add your explanation or evidence as a
+                  This case is decided by an oversight reviewer. Add your explanation or evidence as a
                   comment above; your institution cannot approve or reject its own flagged records.
                 </span>
               </div>
@@ -411,7 +459,7 @@ export const VerificationCasesPage: React.FC = () => {
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
                 rows={2}
-                placeholder="State verified evidence, DigiLocker check, or reason for resolution/rejection..."
+                placeholder="State the evidence reviewed and the reason for resolution/rejection..."
                 className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
               />
 

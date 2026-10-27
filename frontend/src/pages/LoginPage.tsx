@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ShieldCheck, Lock, Mail, ArrowRight, KeyRound, Sparkles } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, ArrowRight, KeyRound, Sparkles, Building2, School, SearchCheck } from 'lucide-react';
+import { DisclaimerBar, DISCLAIMER_TEXT } from '../components/ui/DisclaimerBar';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('admin@college.edu.in');
@@ -39,7 +40,9 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <DisclaimerBar />
+    <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Background radial glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -55,10 +58,10 @@ export const LoginPage: React.FC = () => {
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1">APAAR ReconX</h1>
           <p className="text-xs text-blue-700 font-bold uppercase tracking-widest mb-1">
-            ALL INDIA COUNCIL FOR TECHNICAL EDUCATION
+            Independent prototype · SIH26263
           </p>
           <p className="text-xs text-slate-500">
-            Automated Student Enrollment & APAAR ID Reconciliation Portal
+            Student enrolment data validation & reconciliation prototype
           </p>
         </div>
 
@@ -66,7 +69,7 @@ export const LoginPage: React.FC = () => {
         <div className="mb-5 p-3.5 bg-white border border-blue-200/80 rounded-xl shadow-xs">
           <div className="flex items-center gap-1.5 text-xs font-bold text-blue-800 mb-2">
             <Sparkles className="w-4 h-4 text-blue-600" />
-            <span>Prototype One-Click Access (Select Role):</span>
+            <span>Demo accounts (synthetic data) — select a role:</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             <button
@@ -74,21 +77,21 @@ export const LoginPage: React.FC = () => {
               onClick={() => handleQuick('admin')}
               className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition text-center"
             >
-              👑 College Admin
+              <span className="inline-flex items-center justify-center gap-1"><Building2 className="w-3.5 h-3.5" aria-hidden="true" />College Admin</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuick('institution_user')}
               className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition text-center"
             >
-              🏫 College Staff
+              <span className="inline-flex items-center justify-center gap-1"><School className="w-3.5 h-3.5" aria-hidden="true" />College Staff</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuick('reviewer')}
               className="px-2.5 py-1.5 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-semibold rounded-lg transition text-center"
             >
-              🔍 AICTE Reviewer
+              <span className="inline-flex items-center justify-center gap-1"><SearchCheck className="w-3.5 h-3.5" aria-hidden="true" />Oversight Reviewer</span>
             </button>
           </div>
         </div>
@@ -103,7 +106,7 @@ export const LoginPage: React.FC = () => {
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Official Email ID</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Email</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
@@ -137,7 +140,7 @@ export const LoginPage: React.FC = () => {
               disabled={submitting}
               className="w-full mt-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm shadow-blue-500/20 flex items-center justify-center gap-2 text-sm transition disabled:opacity-50"
             >
-              <span>{submitting ? 'Verifying...' : 'Sign In to Portal'}</span>
+              <span>{submitting ? 'Signing in...' : 'Sign in'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
@@ -150,23 +153,25 @@ export const LoginPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Parichay / MeriPehchaan SSO button (disabled simulation) */}
+            {/* Government SSO is a roadmap item: needs official onboarding, not available in the prototype */}
             <button
               type="button"
               disabled
+              title="Not available in this prototype — requires official government SSO onboarding"
               className="w-full py-2 px-3 bg-slate-100 border border-slate-200 text-slate-500 rounded-lg text-xs font-medium flex items-center justify-center gap-2 opacity-75 cursor-not-allowed"
             >
               <KeyRound className="w-3.5 h-3.5 text-blue-600/60" />
-              <span>MeriPehchaan (National Govt SSO - Coming Soon)</span>
+              <span>Government SSO — not available in prototype (requires official onboarding)</span>
             </button>
           </form>
         </div>
 
         {/* Footer */}
         <p className="text-center text-[11px] text-slate-500 mt-6 font-medium">
-          Smart India Hackathon 2026 · AICTE Prototype Portal
+          Smart India Hackathon 2026 · SIH26263 · {DISCLAIMER_TEXT}
         </p>
       </div>
+    </div>
     </div>
   );
 };

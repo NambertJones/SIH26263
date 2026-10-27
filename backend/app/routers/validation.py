@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.services.privacy import mask_apaar
 from app.database import get_db
 from app.models.user import User
 from app.models.submission import Submission
@@ -44,7 +45,7 @@ def get_validation_results(
             "submission_id": issue.submission_id,
             "student_id": issue.student_id,
             "student_name": student.name if student else None,
-            "student_apaar_id": student.apaar_id if student else None,
+            "student_apaar_id": mask_apaar(student.apaar_id) if student else None,
             "rule_code": issue.rule_code,
             "severity": issue.severity,
             "field_name": issue.field_name,
@@ -112,7 +113,7 @@ def get_duplicates_only(
             "submission_id": issue.submission_id,
             "student_id": issue.student_id,
             "student_name": student.name if student else None,
-            "student_apaar_id": student.apaar_id if student else None,
+            "student_apaar_id": mask_apaar(student.apaar_id) if student else None,
             "rule_code": issue.rule_code,
             "severity": issue.severity,
             "field_name": issue.field_name,

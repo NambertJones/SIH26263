@@ -94,7 +94,7 @@ export const UserManagementPage: React.FC = () => {
             <span>Role-Based User Management & Access Control</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Manage institutional users, compliance staff, and authorized AICTE verification reviewers.
+            Manage demo institution users and oversight reviewers.
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export const UserManagementPage: React.FC = () => {
           {[
             { id: 'all', label: `All Users (${users.length})` },
             { id: 'institution_user', label: 'College Staff' },
-            { id: 'reviewer', label: 'AICTE Reviewers' },
+            { id: 'reviewer', label: 'Oversight Reviewers' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -148,7 +148,7 @@ export const UserManagementPage: React.FC = () => {
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-slate-600">
                 <th className="py-3 px-4 font-semibold">User Details</th>
-                <th className="py-3 px-4 font-semibold">Official Email</th>
+                <th className="py-3 px-4 font-semibold">Email</th>
                 <th className="py-3 px-4 font-semibold">Assigned Role</th>
                 <th className="py-3 px-4 font-semibold">Affiliated Institution</th>
                 <th className="py-3 px-4 font-semibold">Status</th>
@@ -186,7 +186,7 @@ export const UserManagementPage: React.FC = () => {
                         {u.role.replace('_', ' ')}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-600">{u.institution_name || 'Central AICTE Directorate'}</td>
+                    <td className="py-3 px-4 text-slate-600">{u.institution_name || 'Oversight (all institutions)'}</td>
                     <td className="py-3 px-4">
                       <StatusBadge status={u.status} size="sm" />
                     </td>
@@ -223,7 +223,7 @@ export const UserManagementPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">Official Email Address</label>
+            <label className="block font-semibold text-slate-700 mb-1">Email Address</label>
             <input
               type="email"
               required
@@ -256,7 +256,7 @@ export const UserManagementPage: React.FC = () => {
               >
                 <option value="institution_user">College Staff</option>
                 <option value="admin">College Admin</option>
-                <option value="reviewer">AICTE Reviewer</option>
+                <option value="reviewer">Oversight Reviewer (demo)</option>
               </select>
             </div>
 

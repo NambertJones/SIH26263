@@ -1,4 +1,9 @@
 import { maskApaar } from '../lib/privacy';
+import { ImportStepper } from '../components/ui/ImportStepper';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { isCentralUser } from '../lib/privacy';
+import { EmptyState, ErrorBanner, PageLoading } from '../components/ui/States';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { submissionsApi, studentsApi } from '../api/client';
@@ -26,11 +31,18 @@ export const ValidationResultsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [studentTotal, setStudentTotal] = useState(0);
+  const [reloadKey, setReloadKey] = useState(0);
+  const { user } = useAuth();
+  const { notify } = useToast();
+  const institutionUser = !isCentralUser(user);
 
   useEffect(() => {
     async function loadResults() {
       try {
         setLoading(true);
+        setError(null);
         let activeSubId = submissionId;
 
         if (!activeSubId) {
@@ -51,71 +63,67 @@ export const ValidationResultsPage: React.FC = () => {
             limit: 100,
           });
           setStudents(studentData.items);
+          setStudentTotal(studentData.total);
         }
-      } catch (err) {
-        console.error('Error fetching validation results:', err);
+      } catch (err: any) {
+        setError(err.message || 'Request failed');
       } finally {
         setLoading(false);
       }
     }
     loadResults();
-  }, [submissionId, filterStatus, search]);
+  }, [submissionId, filterStatus, search, reloadKey]);
 
   const handleFinalSubmit = async () => {
     if (!submission?.id) return;
     setSubmitting(true);
     try {
       await submissionsApi.submit(submission.id);
-      setSuccessMsg('Batch submitted successfully to AICTE! Verification cases have been dispatched to reviewers.');
+      setSuccessMsg('Batch submitted for oversight review. Review cases have been created for flagged records.');
       setSubmission((prev: any) => ({ ...prev, status: 'submitted' }));
     } catch (err: any) {
-      alert(err.message || 'Failed to submit batch');
+      notify(err.message || 'Failed to submit batch', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (loading && !submission) {
+    return <PageLoading label="Loading validation results…" />;
+  }
+
+  if (error) {
+    return <ErrorBanner message={error} onRetry={() => setReloadKey((k) => k + 1)} />;
+  }
+
+  if (!submission) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200">
+        <EmptyState
+          title="No uploaded files yet"
+          hint="Validation results appear here after a file is uploaded and its columns are mapped."
+          action={
+            institutionUser ? (
+              <button onClick={() => navigate('/upload')} className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-semibold">
+                Start a bulk import
+              </button>
+            ) : undefined
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
-      {/* Stepper */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between max-w-3xl mx-auto text-xs">
-          <div className="flex items-center gap-2 text-emerald-700 font-semibold">
-            <span className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center justify-center text-xs font-bold">
-              ✓
-            </span>
-            <span>Upload File</span>
-          </div>
-          <div className="h-0.5 w-12 bg-emerald-200" />
-          <div className="flex items-center gap-2 text-emerald-700 font-semibold">
-            <span className="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center justify-center text-xs font-bold">
-              ✓
-            </span>
-            <span>Map Columns</span>
-          </div>
-          <div className="h-0.5 w-12 bg-emerald-200" />
-          <div className="flex items-center gap-2 text-blue-700 font-bold">
-            <span className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs">
-              3
-            </span>
-            <span>Validate & Reconcile</span>
-          </div>
-          <div className="h-0.5 w-12 bg-slate-200" />
-          <div className="flex items-center gap-2 text-slate-400 font-medium">
-            <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center text-xs">
-              4
-            </span>
-            <span>Submit</span>
-          </div>
-        </div>
-      </div>
+      {institutionUser && <ImportStepper current={submission?.status === 'submitted' ? 5 : 4} />}
 
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            <span>Automated Validation & Reconciliation Results</span>
+            <span>{institutionUser ? 'Validation Results' : 'Validation Centre'}</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
             File: <strong className="text-blue-700">{submission?.file_name}</strong> · Batch Status:{' '}
@@ -123,6 +131,7 @@ export const ValidationResultsPage: React.FC = () => {
           </p>
         </div>
 
+        {institutionUser && (
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(`/mapping?submission_id=${submission?.id}`)}
@@ -142,9 +151,10 @@ export const ValidationResultsPage: React.FC = () => {
             }`}
           >
             <Send className="w-3.5 h-3.5" />
-            <span>{submission?.status === 'submitted' ? 'Submitted to AICTE ✓' : submitting ? 'Submitting...' : 'Confirm & Finalize Batch'}</span>
+            <span>{submission?.status === 'submitted' ? 'Submitted for review' : submitting ? 'Submitting...' : 'Confirm & Submit for Review'}</span>
           </button>
         </div>
+        )}
       </div>
 
       {successMsg && (
@@ -166,7 +176,7 @@ export const ValidationResultsPage: React.FC = () => {
         <StatCard
           title="Valid Records"
           value={submission?.valid_records || 0}
-          subtitle="Passed all deterministic rules"
+          subtitle="Passed all prototype checks (format, duplicates, intake)"
           icon={<CheckCircle2 className="w-5 h-5 text-emerald-600" />}
           colorBorder="border-emerald-100"
         />
@@ -258,7 +268,7 @@ export const ValidationResultsPage: React.FC = () => {
                     <td className="py-3 px-4 font-mono text-slate-400 font-medium">{st.row_number || '-'}</td>
                     <td className="py-3 px-4 font-semibold text-slate-900">{st.name}</td>
                     <td className="py-3 px-4 font-mono text-blue-700 font-semibold">
-                      {maskApaar(st.apaar_id) || <span className="text-rose-600 italic font-sans font-medium">Missing APAAR</span>}
+                      {st.apaar_status === 'MISSING' ? <span className="text-rose-700 italic font-sans font-medium">Missing APAAR</span> : st.apaar_masked}
                     </td>
                     <td className="py-3 px-4 text-slate-600 font-medium">{st.programme_name || 'CSE'}</td>
                     <td className="py-3 px-4">
@@ -281,6 +291,15 @@ export const ValidationResultsPage: React.FC = () => {
             </tbody>
           </table>
         </div>
+        {studentTotal > students.length && (
+          <p className="px-4 py-3 border-t border-slate-200 text-xs text-slate-600">
+            Showing the first {students.length} of {studentTotal} rows in this file.{' '}
+            <button type="button" onClick={() => navigate('/students')} className="text-blue-700 font-semibold hover:underline">
+              Open Student Records
+            </button>{' '}
+            for the full paginated list.
+          </p>
+        )}
       </div>
     </div>
   );

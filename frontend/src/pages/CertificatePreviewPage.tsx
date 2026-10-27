@@ -73,7 +73,7 @@ export const CertificatePreviewPage: React.FC = () => {
           </button>
           <span className="text-slate-300">/</span>
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-600 font-medium">Select Verified Student:</span>
+            <span className="text-slate-600 font-medium">Select student (passed all checks):</span>
             <select
               value={selectedStudentId}
               onChange={(e) => handleStudentChange(e.target.value)}
@@ -81,7 +81,7 @@ export const CertificatePreviewPage: React.FC = () => {
             >
               {studentsList.map((st) => (
                 <option key={st.id} value={st.id} className="bg-white text-slate-800">
-                  {st.name} ({maskApaar(st.apaar_id) || 'No APAAR'})
+                  {st.name} ({st.apaar_masked})
                 </option>
               ))}
             </select>
@@ -93,11 +93,11 @@ export const CertificatePreviewPage: React.FC = () => {
           className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer"
         >
           <Printer className="w-4 h-4" />
-          <span>Print / Save Certificate PDF</span>
+          <span>Print / Save Prototype Record PDF</span>
         </button>
       </div>
 
-      {/* Official Certificate Layout */}
+      {/* Prototype enrolment record layout (not an official document) */}
       <div className="bg-white border-4 border-[#c8a84e] p-8 md:p-12 rounded-2xl shadow-xl relative overflow-hidden text-slate-800">
         {/* Ornate corner borders */}
         <div className="absolute top-2 left-2 w-10 h-10 border-t-2 border-l-2 border-[#c8a84e] pointer-events-none" />
@@ -121,42 +121,42 @@ export const CertificatePreviewPage: React.FC = () => {
           </div>
 
           <h2 className="text-xl md:text-2xl font-black tracking-widest text-blue-950 uppercase font-serif">
-            ALL INDIA COUNCIL FOR TECHNICAL EDUCATION
+            APAAR ReconX
           </h2>
           <p className="text-[11px] uppercase tracking-widest text-slate-500 mt-1 font-semibold">
-            Nelson Mandela Marg, Vasant Kunj, New Delhi - 110070
+            Independent prototype · Not issued by AICTE or any government body
           </p>
           <p className="text-sm font-bold text-blue-900 tracking-wide mt-3 uppercase border-y border-amber-300 py-1.5 inline-block px-6 bg-amber-50/80 rounded">
-            Student Enrollment & APAAR Verification Certificate
+            Prototype Enrolment Record — Not an Official Document
           </p>
         </div>
 
         {/* Certificate Body */}
         <div className="py-8 space-y-6 text-xs md:text-sm text-slate-700 relative z-10 leading-relaxed font-sans">
           <div className="flex justify-between items-center text-xs text-slate-500 pb-2">
-            <span>Certificate ID: <strong className="font-mono text-blue-700 font-semibold">{certData?.certificate_id}</strong></span>
+            <span>Record ID: <strong className="font-mono text-blue-700 font-semibold">{certData?.certificate_id}</strong></span>
             <span>Issued Date: <strong className="text-slate-900">{certData?.issued_at}</strong></span>
           </div>
 
           <p className="text-justify text-sm text-slate-700">
-            This is to certify that the student record detailed below has passed APAAR ReconX validation and reconciliation against the institution&apos;s AICTE sanctioned intake. APAAR / DigiLocker registry checks are simulated in this prototype.
+            The synthetic student record below passed the APAAR ReconX prototype&apos;s data checks (APAAR format check, duplicate check, and comparison with the institution&apos;s demo intake reference). This is not verification by APAAR, DigiLocker or AICTE: those registry checks are simulated in this prototype.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5 rounded-xl bg-slate-50 border border-slate-200">
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">Candidate Full Name</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">Student Name (synthetic)</span>
               <p className="text-base font-bold text-slate-900 mt-0.5">{certData?.student?.name}</p>
             </div>
 
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">One Nation APAAR ID</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">APAAR ID (synthetic test value)</span>
               <p className="text-base font-bold font-mono text-blue-700 mt-0.5">
                 {certData?.student?.apaar_id}
               </p>
             </div>
 
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">Approved Institution</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">Institution (demo)</span>
               <p className="font-semibold text-slate-900 mt-0.5">
                 {certData?.institution?.name} ({certData?.institution?.aicte_id})
               </p>
@@ -177,7 +177,7 @@ export const CertificatePreviewPage: React.FC = () => {
             </div>
 
             <div>
-              <span className="text-slate-500 text-[11px] uppercase font-medium">Academic Year Cycle</span>
+              <span className="text-slate-500 text-[11px] uppercase font-medium">Academic Year</span>
               <p className="text-slate-800 mt-0.5 font-semibold">
                 {certData?.programme?.academic_year}
               </p>
@@ -213,17 +213,16 @@ export const CertificatePreviewPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Authorized Signatory */}
+          {/* No signatory: a prototype must not imitate an official signature */}
           <div className="text-center sm:text-right">
-            <div className="w-36 h-0.5 bg-blue-900 mx-auto sm:ml-auto mb-2" />
-            <p className="font-bold text-slate-900">Member Secretary</p>
-            <p className="text-[11px] text-slate-500">All India Council for Technical Education</p>
+            <p className="font-bold text-slate-900">System-generated prototype record</p>
+            <p className="text-[11px] text-slate-500">No signature · not valid for any official purpose</p>
           </div>
         </div>
 
         {/* Disclaimer */}
         <p className="text-[10px] text-center text-slate-400 mt-6 tracking-wide uppercase border-t border-slate-200 pt-3 relative z-10">
-          Prototype Verification Document · Smart India Hackathon 2026 · Problem Statement SIH26263
+          Prototype record · Synthetic data · Smart India Hackathon 2026 · SIH26263 · Not an official AICTE or APAAR document
         </p>
       </div>
     </div>
