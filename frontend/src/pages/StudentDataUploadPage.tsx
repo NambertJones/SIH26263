@@ -13,6 +13,33 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 
+const SAMPLE_FILES = [
+  {
+    file: 'CSBS_2025-26_admissions',
+    title: 'CSBS first-year admissions',
+    description: 'A clean batch: every row should pass all checks.',
+    programme: 'Computer Science & Business Systems (CSBS)',
+    rows: 57,
+    formats: ['csv'],
+  },
+  {
+    file: 'MCA_2025-26_admissions',
+    title: 'MCA first-year admissions',
+    description: 'Includes typical data problems: missing and malformed APAAR IDs, a repeated ID, a student already enrolled at another college, an impossible date of birth and formatting errors.',
+    programme: 'Master of Computer Applications (MCA)',
+    rows: 60,
+    formats: ['csv', 'xlsx'],
+  },
+  {
+    file: 'MECH_2025-26_late_admissions',
+    title: 'Mechanical late admissions',
+    description: 'Late admissions that take Mechanical Engineering above its intake reference.',
+    programme: 'Mechanical Engineering (MECH)',
+    rows: 12,
+    formats: ['csv'],
+  },
+];
+
 export const StudentDataUploadPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [academicYear, setAcademicYear] = useState('2025-26');
@@ -67,27 +94,6 @@ export const StudentDataUploadPage: React.FC = () => {
     } finally {
       setUploading(false);
     }
-  };
-
-  const downloadSampleTemplate = () => {
-    const csvContent = `student_name,apaar_id,dob,gender,programme,enrollment_date,status,category,roll_no,email,phone
-Aarav Sharma,240000000001,2004-05-15,Male,CSE,2025-07-20,active,General,312325104001,aarav.sharma@college.edu.in,9876500001
-Diya Patel,240000000002,2004-08-22,Female,CSE,2025-07-20,active,OBC,312325104002,diya.patel@college.edu.in,9876500002
-Vihaan Reddy,240000000003,2003-12-10,Male,CSE,2025-07-20,active,General,312325104003,vihaan.reddy@college.edu.in,9876500003
-Ananya Iyer,554433221100,2004-03-18,Female,CSE,2025-07-20,active,General,312325104004,ananya.iyer@college.edu.in,9876500004
-Rohan Kumar,554433221100,2004-11-05,Male,CSE,2025-07-20,active,SC,312325104005,rohan.kumar@college.edu.in,9876500005
-Sneha Rao,123456789,2004-07-14,Female,CSE,2025-07-20,active,General,312325104006,sneha.rao@college.edu.in,9876500006
-Kabir Singh,998877665544,2004-01-30,Male,CSE,2025-07-20,active,General,312325104007,kabir.singh@college.edu.in,9876500007
-Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104008,pari.deshmukh@college.edu.in,9876500008`;
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'ReconX_Student_Template.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   return (
@@ -174,13 +180,14 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
 
           {/* Action Button */}
           <div className="flex items-center justify-between pt-2">
-            <button
-              onClick={downloadSampleTemplate}
-              className="flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-semibold py-1.5 px-3 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 transition cursor-pointer"
+            <a
+              href="/samples/ReconX_Student_Template.csv"
+              download
+              className="flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-semibold py-1.5 px-3 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 transition"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5" aria-hidden="true" />
               <span>Download CSV Template</span>
-            </button>
+            </a>
 
             <button
               onClick={handleUpload}
@@ -255,6 +262,37 @@ Pari Deshmukh,240000000008,2028-01-01,Female,CSE,2025-07-20,active,OBC,312325104
           </div>
         </div>
       </div>
+      {/* Ready-made admission files for this college's departments */}
+      <section aria-labelledby="sample-files" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs">
+        <h2 id="sample-files" className="text-sm font-bold text-slate-900 tracking-tight">Sample admission files</h2>
+        <p className="text-xs text-slate-600 mt-1">
+          Download a file, then upload it above and pick the matching programme on the next step.
+        </p>
+        <ul className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+          {SAMPLE_FILES.map((f) => (
+            <li key={f.file} className="p-3 rounded-lg border border-slate-200 bg-slate-50 flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-slate-900">{f.title}</p>
+                <p className="text-slate-600 mt-0.5">{f.description}</p>
+                <p className="text-slate-500 mt-1">Programme: <strong>{f.programme}</strong> · {f.rows} rows</p>
+              </div>
+              <div className="flex flex-col gap-1 shrink-0">
+                {f.formats.map((ext) => (
+                  <a
+                    key={ext}
+                    href={`/samples/${f.file}.${ext}`}
+                    download
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-blue-200 bg-white text-blue-700 font-semibold hover:bg-blue-50"
+                  >
+                    <Download className="w-3.5 h-3.5" aria-hidden="true" />
+                    {ext.toUpperCase()}
+                  </a>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 };

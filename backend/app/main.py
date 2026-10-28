@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.database import engine, Base, SessionLocal
+from app.database import engine, Base, SessionLocal, ensure_new_columns
 from app.seed.seed_data import seed_database
 
 # Import models so Base.metadata knows about them
@@ -33,6 +33,7 @@ async def lifespan(app: FastAPI):
     """Application startup and shutdown lifespan events."""
     print("[LIFESPAN] Creating database tables...")
     Base.metadata.create_all(bind=engine)
+    ensure_new_columns()
 
     if settings.SEED_ON_STARTUP:
         print("[LIFESPAN] Running synthetic data seeder...")

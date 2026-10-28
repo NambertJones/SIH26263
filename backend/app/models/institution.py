@@ -20,6 +20,13 @@ class Institution(Base):
     state = Column(String(100))
     type = Column(String(50))  # Self-Financing, Government, etc.
     status = Column(String(20), default="active")
+    # AICTE-style profile details (as submitted by the institution)
+    affiliating_university = Column(String(255))
+    established_year = Column(Integer)
+    approval_status = Column(String(30))  # Approved, Pending, Not submitted
+    approval_reference = Column(String(60))
+    approval_valid_till = Column(String(10))  # academic year, e.g. 2025-26
+    contact_email = Column(String(255))
     logo_url = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

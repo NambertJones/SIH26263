@@ -186,6 +186,28 @@ export const InstitutionSettingsPage: React.FC = () => {
               </div>
             </div>
 
+            <dl className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 rounded-lg bg-slate-50 border border-slate-200">
+              <div>
+                <dt className="text-slate-500">AICTE approval</dt>
+                <dd className="font-semibold text-slate-900">
+                  {institution?.approval_status || 'Not submitted'}
+                  {institution?.approval_valid_till ? ` · ${institution.approval_valid_till}` : ''}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Approval reference</dt>
+                <dd className="font-mono font-semibold text-slate-900">{institution?.approval_reference || 'Not yet issued'}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Affiliation</dt>
+                <dd className="font-semibold text-slate-900">{institution?.affiliating_university || '—'}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Established</dt>
+                <dd className="font-semibold text-slate-900">{institution?.established_year || '—'}</dd>
+              </div>
+            </dl>
+
             <div>
               <label className="block font-semibold text-slate-700 mb-1">Institution Name</label>
               <input

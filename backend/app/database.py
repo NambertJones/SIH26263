@@ -41,3 +41,32 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def ensure_new_columns() -> None:
+    """Add columns introduced after a database was first created.
+
+    `create_all` only creates missing tables, so an existing SQLite/PostgreSQL
+    database would otherwise fail on the newer institution profile fields.
+    """
+    from sqlalchemy import inspect, text
+
+    added = {
+        "institutions": {
+            "affiliating_university": "VARCHAR(255)",
+            "established_year": "INTEGER",
+            "approval_status": "VARCHAR(30)",
+            "approval_reference": "VARCHAR(60)",
+            "approval_valid_till": "VARCHAR(10)",
+            "contact_email": "VARCHAR(255)",
+        },
+    }
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table, columns in added.items():
+            if not inspector.has_table(table):
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table)}
+            for name, ddl_type in columns.items():
+                if name not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl_type}"))

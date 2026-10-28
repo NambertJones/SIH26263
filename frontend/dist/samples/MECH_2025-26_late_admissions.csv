@@ -1,0 +1,13 @@
+student_name,apaar_id,dob,gender,programme,admission_date,status,category,roll_no,email,phone
+Aadhya Gill,121248221185,22/01/2006,Female,MECH,15/08/2025,active,OBC,IIT25MECHL001,aadhya.gill1@student.ilampirai.edu.in,9167338439
+Divya Patel,166352177630,04/12/2007,Female,MECH,02/08/2025,active,OBC,IIT25MECHL002,divya.patel2@student.ilampirai.edu.in,9559722241
+Krishna Gill,132315236288,12/02/2007,Male,MECH,06/08/2025,active,General,IIT25MECHL003,krishna.gill3@student.ilampirai.edu.in,9252090570
+Ahana Khan,116260288389,25/06/2006,Female,MECH,03/08/2025,active,OBC,IIT25MECHL004,ahana.khan4@student.ilampirai.edu.in,9780480329
+Vikram Subramanian,144084455124,28/10/2007,Male,MECH,19/08/2025,active,General,IIT25MECHL005,vikram.subramanian5@student.ilampirai.edu.in,9896328791
+Rohit Khan,105381845813,15/09/2007,Male,MECH,10/08/2025,active,OBC,IIT25MECHL006,rohit.khan6@student.ilampirai.edu.in,9379818124
+Imran Krishnan,123372226733,10/09/2007,Male,MECH,09/08/2025,active,General,IIT25MECHL007,imran.krishnan7@student.ilampirai.edu.in,9751128811
+Aarav Kumar,184185094851,11/12/2007,Male,MECH,04/08/2025,active,OBC,IIT25MECHL008,aarav.kumar8@student.ilampirai.edu.in,9535944827
+Ayesha Fernandes,154154074916,28/06/2006,Female,MECH,14/08/2025,active,SC,IIT25MECHL009,ayesha.fernandes9@student.ilampirai.edu.in,9586286931
+Lakshmi Naidu,101538722812,24/07/2007,Female,MECH,12/08/2025,active,SC,IIT25MECHL010,lakshmi.naidu10@student.ilampirai.edu.in,9940023513
+Ananya Shetty,161904890550,01/10/2006,Female,MECH,10/08/2025,active,OBC,IIT25MECHL011,ananya.shetty11@student.ilampirai.edu.in,9684859734
+Vihaan Pillai,136214113964,28/05/2007,Male,MECH,09/08/2025,active,General,IIT25MECHL012,vihaan.pillai12@student.ilampirai.edu.in,9334379789

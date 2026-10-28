@@ -14,6 +14,12 @@ class InstitutionResponse(BaseModel):
     type: str | None = None
     status: str
     logo_url: str | None = None
+    affiliating_university: str | None = None
+    established_year: int | None = None
+    approval_status: str | None = None
+    approval_reference: str | None = None
+    approval_valid_till: str | None = None
+    contact_email: str | None = None
     created_at: datetime
 
     class Config:
