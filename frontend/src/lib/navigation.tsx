@@ -14,6 +14,8 @@ import {
   Building2,
   Landmark,
   FileBadge,
+  Eye,
+  SlidersHorizontal,
 } from 'lucide-react';
 import type { User } from '../types';
 import { isCentralUser } from './privacy';
@@ -21,7 +23,7 @@ import { isCentralUser } from './privacy';
 /**
  * Personas mapped from the backend roles:
  *  - inst_admin: college admin (role admin + institution)
- *  - operator: college data staff (role institution_user)
+ *  - operator: college staff who validate and review records (role institution_user)
  *  - oversight: review officer (role reviewer)
  *  - central_admin: platform admin (role admin, no institution)
  */
@@ -36,7 +38,7 @@ export function personaOf(user?: User | null): Persona | null {
 
 export const PERSONA_LABEL: Record<Persona, string> = {
   inst_admin: 'Institution Admin',
-  operator: 'Data Operator',
+  operator: 'College Staff',
   oversight: 'Oversight Reviewer',
   central_admin: 'Platform Admin',
 };
@@ -64,6 +66,7 @@ export const NAV_ITEMS: NavItem[] = [
 
   { path: '/duplicates', label: 'Duplicate Review', section: 'Review', icon: icon(CopyCheck), roles: ALL, description: 'Possible duplicate records — human review required' },
   { path: '/cases', label: 'Cases', section: 'Review', icon: icon(AlertOctagon), roles: ALL },
+  { path: '/oversight', label: 'Review Monitoring', section: 'Review', icon: icon(Eye), roles: ['inst_admin', 'oversight', 'central_admin'], description: 'Decisions, escalations and recurring data problems' },
   { path: '/intake', label: 'Intake Reconciliation', section: 'Review', icon: icon(Scale), roles: ALL, description: 'Enrolled counts compared with the intake reference' },
 
   { path: '/reports', label: 'Reports & Exports', section: 'Reporting', icon: icon(BarChart3), roles: ALL },
@@ -72,6 +75,7 @@ export const NAV_ITEMS: NavItem[] = [
   { path: '/institutions', label: 'Institution Registry', section: 'Administration', icon: icon(Landmark), roles: ['oversight', 'central_admin'] },
   { path: '/settings', label: 'Institution & Programmes', section: 'Administration', icon: icon(Building2), roles: ['inst_admin'] },
   { path: '/users', label: 'Users & Roles', section: 'Administration', icon: icon(UserCog), roles: ['inst_admin', 'central_admin'] },
+  { path: '/rules', label: 'Validation Rules', section: 'Administration', icon: icon(SlidersHorizontal), roles: ALL, description: 'Checks applied to uploaded files' },
   { path: '/integrations', label: 'Integrations & Sources', section: 'Administration', icon: icon(Network), roles: ALL },
   { path: '/certificate', label: 'Enrolment Record', section: 'Administration', icon: icon(FileBadge), roles: ['inst_admin', 'oversight', 'central_admin'] },
 ];

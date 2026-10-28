@@ -17,7 +17,7 @@ from app.middleware.auth import get_current_user
 from app.middleware.tenant import get_effective_institution_id
 from app.services.audit_service import log_event
 from app.services.privacy import mask_apaar, apaar_status
-from app.middleware.tenant import is_central_user
+from app.middleware.tenant import is_central_user, require_institution_member
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/students", tags=["Students"])
@@ -199,8 +199,9 @@ class RevealRequest(BaseModel):
 
 
 def _can_reveal(user: User) -> bool:
-    """Data operators never see full identifiers; admins and oversight reviewers may, with a reason."""
-    return user.role in ("admin", "reviewer")
+    """College staff and institution admins investigate records and may view a full ID with a reason.
+    Oversight reviewers monitor the process and work with masked IDs."""
+    return bool(user.institution_id) and user.role in ("admin", "institution_user")
 
 
 @router.post("/{student_id}/reveal-apaar")
@@ -283,6 +284,7 @@ def correct_student_record(
     if not old_student:
         raise HTTPException(status_code=404, detail="Active student record not found")
 
+    require_institution_member(current_user, "correct student records")
     get_effective_institution_id(current_user, old_student.institution_id)
 
     if not correction.reason or len(correction.reason.strip()) < 5:

@@ -7,7 +7,9 @@ import { casesApi, usersApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
-import { maskApaar, isCentralUser } from '../lib/privacy';
+import { maskApaar } from '../lib/privacy';
+import { personaOf } from '../lib/navigation';
+import { formatIST } from '../lib/format';
 import {
   AlertOctagon,
   Search,
@@ -23,7 +25,9 @@ import {
 
 export const VerificationCasesPage: React.FC = () => {
   const { user } = useAuth();
-  const canDecide = isCentralUser(user);
+  const persona = personaOf(user);
+  const isCollege = persona === 'inst_admin' || persona === 'operator';
+  const isOversight = persona === 'oversight' || persona === 'central_admin';
   const { notify } = useToast();
   const [params, setParams] = useSearchParams();
   const PAGE_SIZE = 20;
@@ -95,7 +99,7 @@ export const VerificationCasesPage: React.FC = () => {
     async function loadReviewers() {
       try {
         const uList = await usersApi.list();
-        setReviewers(uList);
+        setReviewers(uList.filter((u: any) => u.institution_id && (u.role === 'institution_user' || u.role === 'admin')));
       } catch {}
     }
     loadReviewers();
@@ -152,6 +156,34 @@ export const VerificationCasesPage: React.FC = () => {
     }
   };
 
+  const runAction = async (fn: () => Promise<any>, success: string) => {
+    if (!selectedCase) return;
+    if (actionReason.trim().length < 5) {
+      notify('Enter a reason of at least 5 characters first.', 'error');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await fn();
+      const refreshed = await casesApi.get(selectedCase.id);
+      setSelectedCase(refreshed);
+      setActionReason('');
+      fetchCases();
+      notify(success, 'success');
+    } catch (err: any) {
+      notify(err.message || 'Action failed', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAwaitEvidence = () =>
+    runAction(() => casesApi.requestClarification(selectedCase.id, actionReason), 'Case marked as awaiting evidence.');
+  const handleEscalate = () =>
+    runAction(() => casesApi.escalate(selectedCase.id, actionReason), 'Case escalated. The institution admin will decide it.');
+  const handleRequestReview = () =>
+    runAction(() => casesApi.requestReview(selectedCase.id, actionReason), 'Re-review requested. The college will re-examine the decision.');
+
   const handleResolve = async () => {
     if (!selectedCase || !actionReason.trim()) {
       notify('Enter a reason before resolving the case.', 'error');
@@ -197,7 +229,7 @@ export const VerificationCasesPage: React.FC = () => {
           <span>Cases</span>
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Review, assign and decide flagged records. Every action is recorded in the case timeline. A flag is a reason to review, not a finding.
+          College staff investigate and decide flagged records; oversight reviewers monitor, escalate and request re-review. Every action is recorded in the case history. A flag is a reason to review, not a finding.
         </p>
       </div>
 
@@ -243,7 +275,8 @@ export const VerificationCasesPage: React.FC = () => {
             <option value="all">Status: All</option>
             <option value="open">Open</option>
             <option value="under_review">Under Review</option>
-            <option value="pending">Pending</option>
+            <option value="pending">Awaiting evidence</option>
+            <option value="escalated">Escalated</option>
             <option value="resolved">Resolved</option>
             <option value="rejected">Dismissed</option>
           </select>
@@ -362,140 +395,167 @@ export const VerificationCasesPage: React.FC = () => {
               )}
             </div>
 
-            {/* Assignment Section (AICTE only) */}
-            {canDecide && (
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-slate-700 font-medium">
-                <UserCheck className="w-4 h-4 text-blue-600" />
-                <span>Assigned Reviewer:</span>
-              </div>
-              <div className="flex items-center gap-2 flex-1 max-w-xs">
-                <select
-                  value={selectedReviewer}
-                  onChange={(e) => setSelectedReviewer(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs"
-                >
-                  <option value="">-- Assign Reviewer --</option>
-                  {reviewers.map((rev) => (
-                    <option key={rev.id} value={rev.id}>
-                      {rev.name} ({rev.role})
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={handleAssign}
-                  disabled={actionLoading || !selectedReviewer}
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs transition disabled:opacity-50 cursor-pointer"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-            )}
-
-            {/* Event Timeline */}
-            <div>
-              <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-blue-600" />
-                <span>Case Timeline & Review Notes</span>
-              </h4>
-
-              <div className="max-h-48 overflow-y-auto space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                {selectedCase.events && selectedCase.events.length > 0 ? (
-                  selectedCase.events.map((ev: any) => (
-                    <div key={ev.id} className="p-2 rounded bg-white border border-slate-200 text-[11px] shadow-xs">
-                      <div className="flex items-center justify-between text-slate-500">
-                        <span className="font-semibold text-blue-700">
-                          {ev.actor_name || 'System'} ({ev.actor_role || 'audit'})
-                        </span>
-                        <span>{new Date(ev.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            {(() => {
+              const status = selectedCase.status;
+              const closed = status === 'resolved' || status === 'rejected';
+              const canAssign = persona === 'inst_admin' && !closed;
+              const canDecide = isCollege && !closed && (status !== 'escalated' || persona === 'inst_admin');
+              const canAwait = isCollege && !closed && status !== 'pending';
+              const canEscalate = (isOversight || persona === 'inst_admin') && !closed && status !== 'escalated';
+              const canReReview = isOversight && closed;
+              const anyAction = canDecide || canAwait || canEscalate || canReReview;
+              return (
+                <>
+                  {canAssign && (
+                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex flex-wrap items-center justify-between gap-3">
+                      <label htmlFor="case-assignee" className="flex items-center gap-2 text-slate-700 font-medium">
+                        <UserCheck className="w-4 h-4 text-blue-600" aria-hidden="true" />
+                        Assigned to
+                      </label>
+                      <div className="flex items-center gap-2 flex-1 max-w-xs">
+                        <select
+                          id="case-assignee"
+                          value={selectedReviewer}
+                          onChange={(e) => setSelectedReviewer(e.target.value)}
+                          className="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-xs text-slate-800"
+                        >
+                          <option value="">— Select staff member —</option>
+                          {reviewers.map((rev) => (
+                            <option key={rev.id} value={rev.id}>
+                              {rev.name} ({rev.role === 'admin' ? 'Institution Admin' : 'College Staff'})
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={handleAssign}
+                          disabled={actionLoading || !selectedReviewer}
+                          className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded text-xs disabled:opacity-50"
+                        >
+                          Save
+                        </button>
                       </div>
-                      <p className="text-slate-700 mt-1">{ev.description}</p>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-slate-400 text-center py-2">No timeline events yet.</p>
-                )}
-              </div>
-            </div>
+                  )}
 
-            {/* Add Comment Field */}
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Add reviewer comment or internal observation..."
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
-              />
-              <button
-                type="button"
-                onClick={handleAddComment}
-                disabled={actionLoading || !newComment.trim()}
-                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-40 cursor-pointer"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            </div>
+                  {/* Event Timeline */}
+                  <div>
+                    <h4 className="font-bold text-slate-900 mb-2 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-blue-600" aria-hidden="true" />
+                      <span>Case history</span>
+                    </h4>
+                    <div className="max-h-52 overflow-y-auto space-y-2 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                      {selectedCase.events && selectedCase.events.length > 0 ? (
+                        selectedCase.events.map((ev: any) => (
+                          <div key={ev.id} className="p-2 rounded bg-white border border-slate-200 text-[11px] shadow-xs">
+                            <div className="flex items-center justify-between text-slate-500">
+                              <span className="font-semibold text-blue-700">
+                                {ev.actor_name || 'System'}
+                                {ev.actor_role ? ` · ${ev.actor_role === 'reviewer' ? 'Oversight Reviewer' : ev.actor_role === 'admin' ? 'Institution Admin' : 'College Staff'}` : ''}
+                              </span>
+                              <span>{formatIST(ev.created_at)}</span>
+                            </div>
+                            <p className="text-slate-700 mt-1">{ev.description}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-slate-400 text-center py-2">No history yet.</p>
+                      )}
+                    </div>
+                  </div>
 
-            {!canDecide && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 flex items-start gap-2">
-                <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>
-                  This case is decided by an oversight reviewer. Add your explanation or evidence as a
-                  comment above; your institution cannot approve or reject its own flagged records.
-                </span>
-              </div>
-            )}
+                  {/* Comments are open to every role */}
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="case-comment" className="sr-only">Add a comment</label>
+                    <input
+                      id="case-comment"
+                      type="text"
+                      placeholder={isOversight ? 'Add an observation or recommendation…' : 'Add a note or evidence summary…'}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="flex-1 bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 placeholder-slate-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddComment}
+                      disabled={actionLoading || !newComment.trim()}
+                      aria-label="Post comment"
+                      className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-40"
+                    >
+                      <Send className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </div>
 
-            {/* Resolution Rationale & Final Action (AICTE only) */}
-            {canDecide && (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-              <label className="block font-semibold text-slate-800">
-                Adjudication Rationale / Justification <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                value={actionReason}
-                onChange={(e) => setActionReason(e.target.value)}
-                rows={2}
-                placeholder="State the evidence reviewed and the reason for resolution/rejection..."
-                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 shadow-xs"
-              />
+                  {status === 'escalated' && persona === 'operator' && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2">
+                      <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>This case has been escalated. The institution admin records the decision; you can still add notes and evidence.</span>
+                    </div>
+                  )}
 
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => setCaseModalOpen(false)}
-                  className="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-100 cursor-pointer"
-                >
-                  Cancel
-                </button>
+                  {isOversight && !anyAction && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-900 text-xs">
+                      This case is already escalated. Decisions are recorded by the college; you can follow its history here.
+                    </div>
+                  )}
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleReject}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
-                  >
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Reject Record</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleResolve}
-                    disabled={actionLoading}
-                    className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs shadow-xs transition disabled:opacity-50 cursor-pointer"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Approve & Resolve</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            )}
+                  {anyAction && (
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                      <label htmlFor="case-reason" className="block font-semibold text-slate-800">
+                        {isOversight ? 'Reason for escalation or re-review' : 'Reason for your decision'} <span className="text-rose-600">*</span>
+                      </label>
+                      <textarea
+                        id="case-reason"
+                        value={actionReason}
+                        onChange={(e) => setActionReason(e.target.value)}
+                        rows={2}
+                        placeholder={isOversight ? 'Explain what needs another look…' : 'State the evidence you checked and the outcome…'}
+                        className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs text-slate-800 placeholder-slate-400"
+                      />
+                      {isOversight && (
+                        <p className="text-[11px] text-slate-600">
+                          Oversight reviewers monitor and escalate. They don&apos;t change student records or decide cases.
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                        {canAwait && (
+                          <button type="button" onClick={handleAwaitEvidence} disabled={actionLoading}
+                            className="px-3 py-1.5 bg-white border border-slate-300 text-slate-800 rounded-lg text-xs font-semibold hover:bg-slate-100 disabled:opacity-50">
+                            Mark awaiting evidence
+                          </button>
+                        )}
+                        {canEscalate && (
+                          <button type="button" onClick={handleEscalate} disabled={actionLoading}
+                            className="px-3 py-1.5 bg-amber-50 border border-amber-300 text-amber-900 rounded-lg text-xs font-semibold hover:bg-amber-100 disabled:opacity-50">
+                            Escalate
+                          </button>
+                        )}
+                        {canReReview && (
+                          <button type="button" onClick={handleRequestReview} disabled={actionLoading}
+                            className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 disabled:opacity-50">
+                            Request re-review
+                          </button>
+                        )}
+                        {canDecide && (
+                          <>
+                            <button type="button" onClick={handleReject} disabled={actionLoading}
+                              className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 rounded-lg text-xs font-semibold disabled:opacity-50">
+                              <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                              Dismiss — not an issue
+                            </button>
+                            <button type="button" onClick={handleResolve} disabled={actionLoading}
+                              className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs disabled:opacity-50">
+                              <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                              Resolve
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         )}
       </Modal>

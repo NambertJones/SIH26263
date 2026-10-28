@@ -193,8 +193,8 @@ def seed_database(db: Session):
     )
     officer_user = User(
         institution_id=None,
-        email="officer1@aicte.gov.in",
-        password_hash=hash_password("officer123"),
+        email="reviewer@reconx.in",
+        password_hash=hash_password("reviewer123"),
         name="Oversight Reviewer",
         role="reviewer",
         status="active",
@@ -402,9 +402,18 @@ def seed_database(db: Session):
     print("[SEED] Seeding verification cases...")
     case_students = [(s, sub1, inst1) for s in sub1_students if s.validation_status in ("invalid", "duplicate")]
     case_students += all_flagged
+    # A realistic review history: college staff decide cases, the reviewer escalates one
+    plan = {
+        0: ("resolved", "Admission form and APAAR card checked; the duplicate row was a re-upload of the same student. Duplicate row removed."),
+        1: ("under_review", None),
+        2: ("rejected", "Data entry error"),
+        3: ("escalated", None),
+        4: ("pending", None),
+    }
     for idx, (st, sub, inst) in enumerate(case_students):
-        case_status = "resolved" if idx == 0 else ("under_review" if idx == 1 else "open")
+        case_status, reason = plan.get(idx, ("open", None))
         issue_type = "duplicate_enrollment" if st.validation_status == "duplicate" else "invalid_data"
+        decided = case_status in ("resolved", "rejected")
         vc = VerificationCase(
             student_id=st.id,
             submission_id=sub.id,
@@ -413,11 +422,11 @@ def seed_database(db: Session):
             title=f"Verification for {st.name} ({mask_apaar(st.apaar_id) if st.apaar_id else 'No APAAR'})",
             description=st.remarks,
             status=case_status,
-            assigned_to=officer_user.id if case_status != "open" else None,
-            priority="high" if issue_type == "duplicate_enrollment" else "medium",
-            resolution_reason="Reviewer checked supporting documents provided by the institution." if case_status == "resolved" else None,
-            resolved_by=officer_user.id if case_status == "resolved" else None,
-            resolved_at=datetime.utcnow() - timedelta(hours=5) if case_status == "resolved" else None,
+            assigned_to=staff_user.id if case_status != "open" and inst.id == inst1.id else None,
+            priority="high" if issue_type == "duplicate_enrollment" or case_status == "escalated" else "medium",
+            resolution_reason=reason,
+            resolved_by=staff_user.id if decided else None,
+            resolved_at=datetime.utcnow() - timedelta(hours=5 + idx) if decided else None,
         )
         db.add(vc)
         db.flush()
@@ -425,10 +434,16 @@ def seed_database(db: Session):
                          description="Case automatically opened after the upload checks."))
         if case_status != "open":
             db.add(CaseEvent(case_id=vc.id, actor_id=admin_user.id, event_type="assigned",
-                             description=f"Assigned to {officer_user.name} for oversight review."))
-        if case_status == "resolved":
-            db.add(CaseEvent(case_id=vc.id, actor_id=officer_user.id, event_type="resolved",
-                             description="Reviewed and resolved by oversight reviewer."))
+                             description=f"Assigned to {staff_user.name} for review."))
+        if decided:
+            db.add(CaseEvent(case_id=vc.id, actor_id=staff_user.id, event_type=case_status,
+                             description=("Resolved with reason: " if case_status == "resolved" else "Rejected: ") + reason))
+        if case_status == "pending":
+            db.add(CaseEvent(case_id=vc.id, actor_id=staff_user.id, event_type="clarification_requested",
+                             description="Clarification requested: Waiting for the student's APAAR card copy from the admissions office."))
+        if case_status == "escalated":
+            db.add(CaseEvent(case_id=vc.id, actor_id=officer_user.id, event_type="escalated",
+                             description="Escalated: Same APAAR ID active at two institutions; needs confirmation from both admissions offices before any correction."))
 
     print("[SEED] Seeding external integrations...")
     db.add_all([
@@ -444,7 +459,7 @@ def seed_database(db: Session):
         ("upload", "File CSE_2025-26_admissions.csv uploaded successfully."),
         ("map_columns", "Column mapping auto-configured and approved."),
         ("validate", "Validation engine completed: 115 records processed."),
-        ("case_assigned", "Verification case assigned to Oversight Reviewer."),
+        ("case_assigned", "Verification case assigned to Priya Natarajan."),
         ("case_resolved", "Case resolved after document review."),
     ]:
         db.add(AuditLog(action=action, actor_id=admin_user.id, actor_email=admin_user.email, description=desc))

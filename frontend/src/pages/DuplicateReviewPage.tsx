@@ -6,6 +6,8 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { EmptyState, ErrorBanner, PageLoading } from '../components/ui/States';
 import { Pagination } from '../components/ui/Pagination';
 import { formatIST } from '../lib/format';
+import { useAuth } from '../contexts/AuthContext';
+import { isCentralUser } from '../lib/privacy';
 
 const PAGE_SIZE = 15;
 
@@ -34,6 +36,8 @@ const AgreementTag: React.FC<{ value: Agreement }> = ({ value }) => (
  * never proof; decisions are recorded on the case, with a reason.
  */
 export const DuplicateReviewPage: React.FC = () => {
+  const { user } = useAuth();
+  const reviewer = isCentralUser(user);
   const [params, setParams] = useSearchParams();
   const status = params.get('status') || 'open_all';
   const page = Number(params.get('page') || '1');
@@ -301,7 +305,7 @@ export const DuplicateReviewPage: React.FC = () => {
                   to={`/cases?case=${detail.id}`}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
                 >
-                  Open case to record a decision <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  {reviewer ? 'Open case to review or escalate' : 'Open case to record a decision'} <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                 </Link>
                 {record && (
                   <Link to={`/students/${record.id}`} className="font-semibold text-blue-700 hover:underline">

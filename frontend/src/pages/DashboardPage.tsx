@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { dashboardApi, reportsApi, casesApi } from '../api/client';
 import { ErrorBanner, PageLoading, EmptyState } from '../components/ui/States';
 import { formatIST, nowIST } from '../lib/format';
+import { personaOf } from '../lib/navigation';
+import { OversightDashboardPage } from './OversightDashboardPage';
 import { useAuth } from '../contexts/AuthContext';
 import { isCentralUser } from '../lib/privacy';
 import { StatCard } from '../components/ui/StatCard';
@@ -19,6 +21,13 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
+  const persona = personaOf(user);
+  if (persona === 'oversight' || persona === 'central_admin') return <OversightDashboardPage />;
+  return <InstitutionDashboard />;
+};
+
+const InstitutionDashboard: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [programs, setPrograms] = useState<any[]>([]);

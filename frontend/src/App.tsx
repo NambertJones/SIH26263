@@ -23,6 +23,8 @@ import { IntakeReconciliationPage } from './pages/IntakeReconciliationPage';
 import { DuplicateReviewPage } from './pages/DuplicateReviewPage';
 import { InstitutionRegistryPage } from './pages/InstitutionRegistryPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { OversightDashboardPage } from './pages/OversightDashboardPage';
+import { ValidationRulesPage } from './pages/ValidationRulesPage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -77,6 +79,8 @@ export const App: React.FC = () => {
             <Route path="intake" element={<IntakeReconciliationPage />} />
             <Route path="audit" element={<AuditTrailPage />} />
             <Route path="institutions" element={<InstitutionRegistryPage />} />
+            <Route path="oversight" element={<OversightDashboardPage />} />
+            <Route path="rules" element={<ValidationRulesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>

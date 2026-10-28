@@ -12,6 +12,7 @@ from app.models.institution import Programme, Institution
 from app.models.validation import ValidationIssue
 from app.models.verification import VerificationCase, CaseEvent
 from app.models.intake import IntakeReference
+from app.services.validation_rules import get_rule_config, OPTIONAL_REQUIRED_FIELDS
 
 
 ALLOWED_GENDERS = {"male", "female", "other", "transgender", "non-binary"}
@@ -104,6 +105,11 @@ def validate_submission(db: Session, submission_id: str) -> dict:
     new_issues: list[ValidationIssue] = []
     student_issues_map: dict[str, list[ValidationIssue]] = {}
 
+    # Institution-specific settings configured by the institution admin
+    cfg = get_rule_config(db, submission.institution_id)
+    required = set(cfg["required_fields"])
+    age_cfg = cfg["age_check"]
+
     today = date.today()
 
     # Rule checks per student
@@ -154,7 +160,7 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                         rule_code="DUP_APAAR_SAME",
                         severity="error",
                         field_name="apaar_id",
-                        description=f"Duplicate APAAR ID '{clean_apaar}' appears {apaar_counts[clean_apaar]} times in this submission.",
+                        description=f"Duplicate APAAR ID {mask_apaar(clean_apaar)} appears {apaar_counts[clean_apaar]} times in this submission.",
                         row_number=s.row_number,
                     ))
 
@@ -167,12 +173,28 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                         rule_code="DUP_APAAR_CROSS",
                         severity="error",
                         field_name="apaar_id",
-                        description=f"Cross-institution duplicate: APAAR ID '{clean_apaar}' is actively enrolled at '{other_inst}'.",
+                        description=f"Possible cross-institution duplicate — review required: APAAR ID {mask_apaar(clean_apaar)} has an active record at '{other_inst}'.",
                         row_number=s.row_number,
                     ))
 
+        # 1b. Extra mandatory fields chosen by the admin
+        for field in sorted(required - {"date_of_birth"}):
+            value = getattr(s, field, None)
+            if value is None or (isinstance(value, str) and not value.strip()):
+                s_issues.append(ValidationIssue(
+                    submission_id=submission.id,
+                    student_id=s.id,
+                    rule_code="MISSING_REQUIRED",
+                    severity="error",
+                    field_name=field,
+                    description=f"{OPTIONAL_REQUIRED_FIELDS[field]} is required by this institution's validation rules.",
+                    row_number=s.row_number,
+                ))
+
         # 5. Date of Birth Check
-        if not s.date_of_birth:
+        if not s.date_of_birth and "date_of_birth" not in required:
+            pass
+        elif not s.date_of_birth:
             s_issues.append(ValidationIssue(
                 submission_id=submission.id,
                 student_id=s.id,
@@ -197,7 +219,9 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                 age = today.year - s.date_of_birth.year - (
                     (today.month, today.day) < (s.date_of_birth.month, s.date_of_birth.day)
                 )
-                if age < 15:
+                if not age_cfg["enabled"]:
+                    pass
+                elif age < age_cfg["min_age"]:
                     s_issues.append(ValidationIssue(
                         submission_id=submission.id,
                         student_id=s.id,
@@ -207,7 +231,7 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                         description=f"Candidate age is {age} years ({s.date_of_birth}), below the plausible minimum for technical education.",
                         row_number=s.row_number,
                     ))
-                elif age < 16:
+                elif age < age_cfg["review_below_age"]:
                     s_issues.append(ValidationIssue(
                         submission_id=submission.id,
                         student_id=s.id,
@@ -219,7 +243,7 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                     ))
 
         # 6. Enrollment Date Inconsistency
-        if s.enrollment_date and s.date_of_birth:
+        if cfg["admission_date_check"]["enabled"] and s.enrollment_date and s.date_of_birth:
             if s.enrollment_date <= s.date_of_birth:
                 s_issues.append(ValidationIssue(
                     submission_id=submission.id,
@@ -242,25 +266,25 @@ def validate_submission(db: Session, submission_id: str) -> dict:
                 ))
 
         # 7. Gender format
-        if s.gender:
+        if s.gender and cfg["gender_format"]["enabled"]:
             if s.gender.lower().strip() not in ALLOWED_GENDERS:
                 s_issues.append(ValidationIssue(
                     submission_id=submission.id,
                     student_id=s.id,
                     rule_code="FMT_GENDER",
-                    severity="warning",
+                    severity=cfg["gender_format"]["severity"],
                     field_name="gender",
                     description=f"Unrecognized gender '{s.gender}'. Allowed: Male, Female, Other, Transgender.",
                     row_number=s.row_number,
                 ))
 
         # 8. Email format
-        if s.email and not EMAIL_REGEX.match(s.email.strip()):
+        if s.email and cfg["email_format"]["enabled"] and not EMAIL_REGEX.match(s.email.strip()):
             s_issues.append(ValidationIssue(
                 submission_id=submission.id,
                 student_id=s.id,
                 rule_code="FMT_EMAIL",
-                severity="warning",
+                severity=cfg["email_format"]["severity"],
                 field_name="email",
                 description=f"Invalid email format: '{s.email}'.",
                 row_number=s.row_number,

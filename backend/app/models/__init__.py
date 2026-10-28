@@ -9,6 +9,7 @@ from app.models.verification import VerificationCase, CaseEvent
 from app.models.integration import IntegrationConfig
 from app.models.audit import AuditLog
 from app.models.intake import IntakeReference
+from app.models.rules import ValidationRuleConfig
 
 __all__ = [
     "User",
@@ -23,4 +24,5 @@ __all__ = [
     "IntegrationConfig",
     "AuditLog",
     "IntakeReference",
+    "ValidationRuleConfig",
 ]

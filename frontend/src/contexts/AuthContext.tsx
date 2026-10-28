@@ -51,8 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email = 'staff@college.edu.in';
       pass = 'staff123';
     } else if (role === 'reviewer') {
-      email = 'officer1@aicte.gov.in';
-      pass = 'officer123';
+      email = 'reviewer@reconx.in';
+      pass = 'reviewer123';
     }
 
     await login(email, pass);

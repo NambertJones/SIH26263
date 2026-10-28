@@ -25,6 +25,8 @@ from app.routers import (
     institutions,
     audit,
     certificate,
+    rules,
+    oversight,
 )
 
 
@@ -77,6 +79,8 @@ app.include_router(institutions.router)
 app.include_router(audit.router)
 app.include_router(certificate.router)
 app.include_router(certificate.public_router)
+app.include_router(rules.router)
+app.include_router(oversight.router)
 
 
 import os

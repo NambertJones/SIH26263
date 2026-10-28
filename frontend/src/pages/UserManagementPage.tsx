@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { usersApi, institutionsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
+import { useAuth } from '../contexts/AuthContext';
+import { isCentralUser } from '../lib/privacy';
 import {
   UserCog,
   UserPlus,
@@ -13,7 +15,32 @@ import {
   Building,
 } from 'lucide-react';
 
+const ROLE_LABEL: Record<string, string> = {
+  admin: 'Institution Admin',
+  institution_user: 'College Staff',
+  reviewer: 'Oversight Reviewer',
+};
+
+// Recommended permissions design for this platform (enforced by the server)
+const MATRIX: { capability: string; admin: string; staff: string; reviewer: string }[] = [
+  { capability: 'Manage user accounts and roles', admin: '✓', staff: '—', reviewer: '—' },
+  { capability: 'Institution profile and programmes', admin: '✓', staff: '—', reviewer: '—' },
+  { capability: 'Configure validation rules', admin: '✓', staff: 'View', reviewer: 'View' },
+  { capability: 'Upload and validate student files', admin: '✓', staff: '✓', reviewer: '—' },
+  { capability: 'Investigate flagged records, view full APAAR ID with reason', admin: '✓', staff: '✓', reviewer: '—' },
+  { capability: 'Correct student records', admin: '✓', staff: '✓', reviewer: '—' },
+  { capability: 'Resolve or dismiss cases', admin: '✓ incl. escalated', staff: '✓', reviewer: '—' },
+  { capability: 'Assign cases to staff', admin: '✓', staff: '—', reviewer: '—' },
+  { capability: 'Escalate a case', admin: '✓', staff: '—', reviewer: '✓' },
+  { capability: 'Request re-review of a decision', admin: '—', staff: '—', reviewer: '✓' },
+  { capability: 'Comment on cases', admin: '✓', staff: '✓', reviewer: '✓' },
+  { capability: 'Review monitoring and audit trail', admin: 'Own college', staff: 'Case history', reviewer: 'All colleges' },
+  { capability: 'Reports', admin: '✓', staff: '✓', reviewer: '✓' },
+];
+
 export const UserManagementPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
+  const platformAdmin = isCentralUser(currentUser);
   const [users, setUsers] = useState<any[]>([]);
   const [institutions, setInstitutions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'all' | 'institution_user' | 'reviewer'>('all');
@@ -141,6 +168,41 @@ export const UserManagementPage: React.FC = () => {
         </div>
       </div>
 
+      {/* What each role can do */}
+      <section aria-labelledby="role-matrix" className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+        <div className="p-4 border-b border-slate-200">
+          <h2 id="role-matrix" className="text-sm font-bold text-slate-900">What each role can do</h2>
+          <p className="text-xs text-slate-600 mt-0.5">
+            Admin configures the platform, College Staff do the validation and review work, and the Oversight Reviewer monitors
+            decisions and escalates. These permissions are enforced by the server, not just hidden in the interface.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="bg-slate-50 text-slate-700 border-b border-slate-200">
+                <th scope="col" className="py-2.5 px-4 font-semibold">Capability</th>
+                <th scope="col" className="py-2.5 px-4 font-semibold text-center">Institution Admin</th>
+                <th scope="col" className="py-2.5 px-4 font-semibold text-center">College Staff</th>
+                <th scope="col" className="py-2.5 px-4 font-semibold text-center">Oversight Reviewer</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {MATRIX.map((m) => (
+                <tr key={m.capability}>
+                  <th scope="row" className="py-2 px-4 font-medium text-slate-800">{m.capability}</th>
+                  {[m.admin, m.staff, m.reviewer].map((v, i) => (
+                    <td key={i} className={`py-2 px-4 text-center ${v === '—' ? 'text-slate-400' : 'text-slate-900 font-semibold'}`}>
+                      {v === '—' ? <span aria-label="Not permitted">—</span> : v}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       {/* Users Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
@@ -183,7 +245,7 @@ export const UserManagementPage: React.FC = () => {
                             : 'bg-slate-100 text-slate-700 border border-slate-200'
                         }`}
                       >
-                        {u.role.replace('_', ' ')}
+                        {ROLE_LABEL[u.role] || u.role}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-slate-600">{u.institution_name || 'Oversight (all institutions)'}</td>
@@ -255,8 +317,8 @@ export const UserManagementPage: React.FC = () => {
                 className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:border-blue-500 shadow-xs"
               >
                 <option value="institution_user">College Staff</option>
-                <option value="admin">College Admin</option>
-                <option value="reviewer">Oversight Reviewer</option>
+                <option value="admin">Institution Admin</option>
+                {platformAdmin && <option value="reviewer">Oversight Reviewer</option>}
               </select>
             </div>
 

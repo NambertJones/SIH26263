@@ -204,3 +204,38 @@ def reject_case(db: Session, case_id: str, actor_id: str, rejection_reason: str)
     db.commit()
     db.refresh(case)
     return case
+
+
+def escalate_case(db: Session, case_id: str, actor_id: str, reason: str) -> VerificationCase:
+    """Oversight escalates a disputed or sensitive case; only the institution admin can then decide it."""
+    case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
+    if not case:
+        raise ValueError(f"Case {case_id} not found")
+    case.status = "escalated"
+    case.priority = "high"
+    case.updated_at = datetime.utcnow()
+    db.add(CaseEvent(case_id=case.id, actor_id=actor_id, event_type="escalated", description=f"Escalated: {reason}"))
+    db.commit()
+    db.refresh(case)
+    return case
+
+
+def request_review(db: Session, case_id: str, actor_id: str, reason: str) -> VerificationCase:
+    """Oversight asks the college to re-examine a decision. The original decision stays in the history."""
+    case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
+    if not case:
+        raise ValueError(f"Case {case_id} not found")
+    previous = case.status
+    case.status = "under_review"
+    case.updated_at = datetime.utcnow()
+    db.add(CaseEvent(
+        case_id=case.id,
+        actor_id=actor_id,
+        event_type="review_requested",
+        description=f"Re-review requested (was {previous}): {reason}",
+        old_value=previous,
+        new_value="under_review",
+    ))
+    db.commit()
+    db.refresh(case)
+    return case

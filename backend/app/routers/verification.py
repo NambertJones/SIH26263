@@ -15,7 +15,13 @@ from app.schemas.verification import (
     ClarificationRequest,
 )
 from app.middleware.auth import get_current_user
-from app.middleware.tenant import get_effective_institution_id, require_central_user, is_central_user
+from app.middleware.tenant import (
+    get_effective_institution_id,
+    require_central_user,
+    require_institution_member,
+    require_institution_admin,
+    is_central_user,
+)
 from app.models.student import Student
 from app.services.case_manager import (
     get_cases,
@@ -24,6 +30,8 @@ from app.services.case_manager import (
     request_clarification,
     resolve_case,
     reject_case,
+    escalate_case,
+    request_review,
 )
 from app.services.audit_service import log_event
 
@@ -169,7 +177,7 @@ def assign(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    require_central_user(current_user)
+    require_institution_admin(current_user, "assign cases")
     get_effective_institution_id(current_user, case.institution_id)
 
     try:
@@ -223,6 +231,7 @@ def request_case_clarification(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
+    require_institution_member(current_user, "change a case's status")
     get_effective_institution_id(current_user, case.institution_id)
 
     updated = request_clarification(db, case_id, current_user.id, request.note)
@@ -256,8 +265,10 @@ def resolve(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    require_central_user(current_user)
+    require_institution_member(current_user, "decide cases; use Escalate or Request re-review instead")
     get_effective_institution_id(current_user, case.institution_id)
+    if case.status == "escalated" and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Escalated cases are decided by the institution admin.")
 
     updated = resolve_case(db, case_id, current_user.id, request.reason)
     log_event(
@@ -290,8 +301,10 @@ def reject(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    require_central_user(current_user)
+    require_institution_member(current_user, "decide cases; use Escalate or Request re-review instead")
     get_effective_institution_id(current_user, case.institution_id)
+    if case.status == "escalated" and current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Escalated cases are decided by the institution admin.")
 
     updated = reject_case(db, case_id, current_user.id, request.reason)
     log_event(
@@ -304,3 +317,51 @@ def reject(
         description=f"Rejected case {case_id}. Reason: {request.reason}",
     )
     return {"message": "Case rejected", "status": updated.status}
+
+
+@router.post("/{case_id}/escalate")
+def escalate(
+    case_id: str,
+    request: ResolveCaseRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Escalate a disputed or sensitive case (oversight reviewer or institution admin)."""
+    if not request.reason or len(request.reason.strip()) < 5:
+        raise HTTPException(status_code=400, detail="A reason is required to escalate a case.")
+    case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    get_effective_institution_id(current_user, case.institution_id)
+    if not (is_central_user(current_user) or (current_user.role == "admin" and current_user.institution_id)):
+        raise HTTPException(status_code=403, detail="Only oversight reviewers or the institution admin can escalate cases.")
+    if case.status in ("resolved", "rejected"):
+        raise HTTPException(status_code=409, detail="This case is closed. Use Request re-review to reopen it.")
+
+    updated = escalate_case(db, case_id, current_user.id, request.reason.strip())
+    log_event(db=db, action="case_escalated", actor_id=current_user.id, actor_email=current_user.email,
+              entity_type="case", entity_id=case_id, description=f"Escalated case {case_id}. Reason: {request.reason.strip()}")
+    return {"message": "Case escalated", "status": updated.status}
+
+
+@router.post("/{case_id}/request-review")
+def request_case_review(
+    case_id: str,
+    request: ResolveCaseRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Oversight asks the college to re-examine a closed case. Records are not changed."""
+    if not request.reason or len(request.reason.strip()) < 5:
+        raise HTTPException(status_code=400, detail="A reason is required to request a re-review.")
+    case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found")
+    require_central_user(current_user)
+    if case.status not in ("resolved", "rejected"):
+        raise HTTPException(status_code=409, detail="Only closed cases can be sent back for re-review.")
+
+    updated = request_review(db, case_id, current_user.id, request.reason.strip())
+    log_event(db=db, action="review_requested", actor_id=current_user.id, actor_email=current_user.email,
+              entity_type="case", entity_id=case_id, description=f"Requested re-review of case {case_id}. Reason: {request.reason.strip()}")
+    return {"message": "Re-review requested", "status": updated.status}

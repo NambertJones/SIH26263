@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, XCircle, Copy, Clock, AlertTriangle, CircleDot, Ban } from 'lucide-react';
+import { CheckCircle2, XCircle, Copy, Clock, AlertTriangle, CircleDot, Ban, Flag } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: string;
@@ -20,7 +20,8 @@ const STYLES: Record<string, Style> = {
   duplicate: { label: 'Possible duplicate', cls: 'bg-amber-50 text-amber-900 border-amber-300', icon: Copy },
   dup_apaar: { label: 'Possible duplicate', cls: 'bg-amber-50 text-amber-900 border-amber-300', icon: Copy },
   warning: { label: 'Warning', cls: 'bg-amber-50 text-amber-900 border-amber-300', icon: AlertTriangle },
-  pending: { label: 'Pending', cls: 'bg-amber-50 text-amber-900 border-amber-300', icon: Clock },
+  pending: { label: 'Awaiting evidence', cls: 'bg-amber-50 text-amber-900 border-amber-300', icon: Clock },
+  escalated: { label: 'Escalated', cls: 'bg-orange-50 text-orange-900 border-orange-300', icon: Flag },
   clarification_requested: { label: 'Awaiting evidence', cls: 'bg-amber-50 text-amber-900 border-amber-300', icon: Clock },
   under_review: { label: 'Under review', cls: 'bg-blue-50 text-blue-800 border-blue-200', icon: CircleDot },
   open: { label: 'Open', cls: 'bg-blue-50 text-blue-800 border-blue-200', icon: CircleDot },

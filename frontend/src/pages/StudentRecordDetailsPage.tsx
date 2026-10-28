@@ -6,6 +6,8 @@ import { Modal } from '../components/ui/Modal';
 import { MaskedApaar } from '../components/ui/MaskedApaar';
 import { PageLoading } from '../components/ui/States';
 import { formatIST } from '../lib/format';
+import { useAuth } from '../contexts/AuthContext';
+import { isCentralUser } from '../lib/privacy';
 import {
   User,
   ShieldAlert,
@@ -20,6 +22,8 @@ import {
 export const StudentRecordDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const canCorrect = !isCentralUser(user);
 
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -120,6 +124,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-3">
+          {canCorrect && (
           <button
             onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-semibold rounded-lg text-xs transition cursor-pointer"
@@ -127,6 +132,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
             <Edit3 className="w-3.5 h-3.5" />
             <span>Submit Correction</span>
           </button>
+          )}
 
           <button
             onClick={() => navigate(`/certificate?student_id=${student.id}`)}

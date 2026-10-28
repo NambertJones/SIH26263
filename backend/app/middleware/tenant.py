@@ -19,11 +19,29 @@ def is_central_user(user: User) -> bool:
 
 
 def require_central_user(user: User) -> None:
-    """Only AICTE reviewers / AICTE admins may adjudicate verification cases."""
+    """Oversight users only (reviewers and platform admins with no institution)."""
     if not is_central_user(user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only AICTE verification officers can decide verification cases.",
+            detail="Only oversight reviewers can perform this action.",
+        )
+
+
+def require_institution_member(user: User, action: str = "perform this action") -> None:
+    """College staff and institution admins. Oversight reviewers monitor but do not edit college data."""
+    if is_central_user(user) or not user.institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Oversight reviewers cannot {action}. This is done by the college's staff or admin.",
+        )
+
+
+def require_institution_admin(user: User, action: str = "perform this action") -> None:
+    """Institution admin of a college (role admin bound to an institution)."""
+    if user.role != "admin" or not user.institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Only the institution admin can {action}.",
         )
 
 

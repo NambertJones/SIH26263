@@ -16,7 +16,7 @@ from app.models.student import Student
 from app.models.institution import Programme
 from app.schemas.submission import SubmissionResponse, ColumnMappingRequest
 from app.middleware.auth import get_current_user
-from app.middleware.tenant import get_effective_institution_id
+from app.middleware.tenant import get_effective_institution_id, require_institution_member
 from app.services.file_processor import get_file_preview, parse_rows_with_mapping
 from app.services.validation_engine import validate_submission
 from app.services.audit_service import log_event
@@ -226,6 +226,7 @@ def map_columns(
     if not s:
         raise HTTPException(status_code=404, detail="Submission not found")
 
+    require_institution_member(current_user, "change uploaded files")
     get_effective_institution_id(current_user, s.institution_id)
 
     if request.programme_id:
@@ -313,6 +314,7 @@ def validate(
     if not s:
         raise HTTPException(status_code=404, detail="Submission not found")
 
+    require_institution_member(current_user, "change uploaded files")
     get_effective_institution_id(current_user, s.institution_id)
 
     results = validate_submission(db, s.id)
@@ -341,6 +343,7 @@ def submit_final(
     if not s:
         raise HTTPException(status_code=404, detail="Submission not found")
 
+    require_institution_member(current_user, "change uploaded files")
     get_effective_institution_id(current_user, s.institution_id)
 
     s.status = "submitted"

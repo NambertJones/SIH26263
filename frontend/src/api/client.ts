@@ -190,6 +190,32 @@ export const casesApi = {
       method: 'POST',
       body: JSON.stringify({ reason }),
     }),
+  escalate: (id: string, reason: string) =>
+    request<any>(`/cases/${id}/escalate`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+  requestReview: (id: string, reason: string) =>
+    request<any>(`/cases/${id}/request-review`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    }),
+};
+
+// Validation rule settings (institution admin edits; everyone can read)
+export const rulesApi = {
+  get: (institutionId?: string) =>
+    request<any>(`/validation-rules${institutionId ? `?institution_id=${institutionId}` : ''}`),
+  save: (config: any) =>
+    request<any>('/validation-rules', {
+      method: 'PUT',
+      body: JSON.stringify({ config }),
+    }),
+};
+
+// Oversight monitoring (reviewers and institution admins)
+export const oversightApi = {
+  summary: () => request<any>('/oversight/summary'),
 };
 
 // Reports API

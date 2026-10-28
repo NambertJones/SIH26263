@@ -42,9 +42,9 @@
 
 | Role | Email | Password | Access Scope |
 |---|---|---|---|
-| **College Administrator** | `admin@college.edu.in` | `admin123` | Institutional uploads, settings, staff management, compliance |
-| **Admissions Staff** | `staff@college.edu.in` | `staff123` | Batch upload, column mapping, record correction |
-| **Oversight Reviewer** | `officer1@aicte.gov.in` | `officer123` | Central review queue, cross-institutional dispute adjudication, compliance |
+| **Institution Admin** | `admin@college.edu.in` | `admin123` | Configures the platform: institution profile, programmes, users, validation rules; assigns cases; decides escalated cases; audit and oversight views |
+| **College Staff** | `staff@college.edu.in` | `staff123` | Main working role: uploads and validates files, investigates flagged records, resolves or dismisses cases with reasons, corrects records |
+| **Oversight Reviewer** | `reviewer@reconx.in` | `reviewer123` | Monitors all institutions: reviews decisions and audit history, escalates cases, requests re-review. Cannot edit records or decide cases |
 
 *Note: You can also use the one-click quick-login buttons on the login screen or in the top navigation bar to switch roles instantly.*
 
@@ -116,12 +116,12 @@ npm run dev
 
 | Role | Scope |
 |---|---|
-| College Admin (`admin` + institution) | Own institution only: data, settings, staff accounts |
-| Admissions Staff (`institution_user`) | Own institution only: upload, map, correct records, comment on cases |
-| Oversight Reviewer (`reviewer`) | All institutions; **only role that can assign, resolve or reject verification cases** |
-| Oversight Admin (`admin`, no institution) | Platform-wide administration |
+| Institution Admin (`admin` + institution) | Own institution: profile, programmes, users, validation rules, case assignment, escalated-case decisions, audit and oversight summary |
+| College Staff (`institution_user`) | Own institution: upload/map/validate/submit files, correct records, resolve/dismiss/mark-awaiting-evidence on cases, reveal a full APAAR ID with a reason |
+| Oversight Reviewer (`reviewer`) | All institutions, read-only on data: oversight dashboard, audit trail, comment, **escalate** open cases, **request re-review** of closed cases. Cannot decide cases, correct records, upload or reveal full IDs |
+| Platform Admin (`admin`, no institution) | Platform-wide administration |
 
-- APAAR IDs are masked (`1234-****-9012`) in list views, case queues and reports; the full ID is shown only on the authorised record detail page and on the certificate.
+- APAAR IDs are masked (`XXXX-XXXX-9012`) everywhere. College staff and the institution admin can reveal a full ID on the record page after giving a reason; every reveal is audited.
 - Certificate QR codes carry only the certificate number. `GET /api/public/verify/{certificate_id}` (UI: `/verify/:id`) lets employers/regulators verify without logging in and returns only masked APAAR, name, institution, programme and status.
 - Dates in uploads are read day-first (`12/05/2004` = 12 May 2004).
 - Set `JWT_SECRET` (or `SECRET_KEY`) and `PUBLIC_BASE_URL` in production.

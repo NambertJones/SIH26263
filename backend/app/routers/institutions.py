@@ -49,6 +49,8 @@ def update_institution(
 
     if not is_aicte_admin(current_user) and current_user.institution_id != inst.id:
         raise HTTPException(status_code=403, detail="Permission denied.")
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only the institution admin can change the institution profile or programmes.")
 
     if request.name:
         inst.name = request.name.strip()
@@ -99,6 +101,8 @@ def add_programme(
 
     if not is_aicte_admin(current_user) and current_user.institution_id != inst.id:
         raise HTTPException(status_code=403, detail="Permission denied.")
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Only the institution admin can change the institution profile or programmes.")
 
     prog = Programme(
         institution_id=institution_id,
