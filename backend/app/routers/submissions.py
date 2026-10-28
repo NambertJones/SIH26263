@@ -13,12 +13,13 @@ from app.database import get_db
 from app.models.user import User
 from app.models.submission import Submission
 from app.models.student import Student
+from app.models.validation import ValidationIssue
 from app.models.institution import Programme
 from app.schemas.submission import SubmissionResponse, ColumnMappingRequest
 from app.middleware.auth import get_current_user
 from app.middleware.tenant import get_effective_institution_id, require_institution_member
 from app.services.file_processor import get_file_preview, parse_rows_with_mapping
-from app.services.validation_engine import validate_submission
+from app.services.validation_engine import validate_submission, commit_submission
 from app.services.audit_service import log_event
 
 router = APIRouter(prefix="/api/submissions", tags=["Submissions"])
@@ -85,6 +86,13 @@ async def upload_file(
             detail=f"Failed to read file: {str(e)}",
         )
 
+    # Same file already submitted by this institution? Warn; the row-level checks will skip repeats.
+    previous = db.query(Submission).filter(
+        Submission.institution_id == current_user.institution_id,
+        Submission.file_checksum == checksum,
+        Submission.status == "submitted",
+    ).order_by(Submission.submitted_at.desc()).first()
+
     submission = Submission(
         institution_id=current_user.institution_id,
         uploaded_by=current_user.id,
@@ -119,6 +127,9 @@ async def upload_file(
         "columns": preview_data["columns"],
         "auto_mappings": preview_data["auto_mappings"],
         "preview_rows": preview_data["preview_rows"],
+        "duplicate_of": (
+            {"file_name": previous.file_name, "submitted_at": previous.submitted_at.isoformat() + "Z"} if previous else None
+        ),
     }
 
 
@@ -229,6 +240,9 @@ def map_columns(
     require_institution_member(current_user, "change uploaded files")
     get_effective_institution_id(current_user, s.institution_id)
 
+    if s.status == "submitted":
+        raise HTTPException(status_code=409, detail="This file has already been submitted. Upload it again to re-import.")
+
     if request.programme_id:
         _ensure_own_programme(db, request.programme_id, s.institution_id)
         s.programme_id = request.programme_id
@@ -241,8 +255,23 @@ def map_columns(
     # Parse all rows from file using mapping
     parsed_rows = parse_rows_with_mapping(s.file_path, request.mapping)
 
-    # Delete existing student records for this submission
+    # Re-mapping a draft replaces its preview rows (drafts are never on record and have no cases)
+    db.query(ValidationIssue).filter(ValidationIssue.submission_id == s.id).delete()
     db.query(Student).filter(Student.submission_id == s.id).delete()
+
+    # Each row's programme column is matched to this college's programmes by code or name;
+    # rows without one fall back to the programme chosen for the whole file.
+    lookup = {}
+    for p in db.query(Programme).filter(Programme.institution_id == s.institution_id).all():
+        lookup[(p.code or "").strip().lower()] = p.id
+        lookup[(p.name or "").strip().lower()] = p.id
+    lookup.pop("", None)
+
+    def programme_for(value) -> str | None:
+        key = str(value or "").strip().lower()
+        if not key:
+            return s.programme_id
+        return lookup.get(key)  # an unknown programme stays empty and is flagged by validation
 
     students_to_add = []
     for r in parsed_rows:
@@ -266,13 +295,13 @@ def map_columns(
             institution_id=s.institution_id,
             submission_id=s.id,
             apaar_id=r.get("apaar_id"),
-            name=r.get("name") or "Unknown Candidate",
+            name=(r.get("name") or "").strip(),  # left empty so the missing-name check flags it
             date_of_birth=dob,
             gender=r.get("gender"),
-            programme_id=s.programme_id,
+            programme_id=programme_for(r.get("programme")),
             enrollment_date=enr_date,
             enrollment_status=r.get("enrollment_status") or "active",
-            category=r.get("category") or "General",
+            category=r.get("category"),
             institute_roll_no=r.get("institute_roll_no"),
             email=r.get("email"),
             phone=r.get("phone"),
@@ -316,6 +345,8 @@ def validate(
 
     require_institution_member(current_user, "change uploaded files")
     get_effective_institution_id(current_user, s.institution_id)
+    if s.status == "submitted":
+        raise HTTPException(status_code=409, detail="This file has already been submitted; its records are now on record.")
 
     results = validate_submission(db, s.id)
 
@@ -346,8 +377,12 @@ def submit_final(
     require_institution_member(current_user, "change uploaded files")
     get_effective_institution_id(current_user, s.institution_id)
 
-    s.status = "submitted"
-    db.commit()
+    if s.status == "submitted":
+        raise HTTPException(status_code=409, detail="This file has already been submitted.")
+    if s.status not in ("validated", "mapped"):
+        raise HTTPException(status_code=409, detail="Map and validate the file before submitting it.")
+
+    summary = commit_submission(db, s, current_user.id)
 
     log_event(
         db=db,
@@ -356,7 +391,7 @@ def submit_final(
         actor_email=current_user.email,
         entity_type="submission",
         entity_id=s.id,
-        description=f"Finalized and submitted submission {s.id}.",
+        description=f"Submitted '{s.file_name}': {summary['message']}",
+        metadata={k: summary[k] for k in ("inserted", "updated", "skipped", "flagged", "warnings", "cases_created")},
     )
-
-    return {"submission_id": s.id, "status": s.status, "message": "Submission submitted successfully"}
+    return summary

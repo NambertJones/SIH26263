@@ -1,0 +1,5 @@
+role,email,password,institution
+Institution Admin,admin@college.edu.in,admin123,Ilampirai Institute of Technology
+College Staff,staff@college.edu.in,staff123,Ilampirai Institute of Technology
+College Staff,staff.tce@college.edu.in,staff123,Tamravarni College of Engineering
+Oversight Reviewer,reviewer@reconx.in,reviewer123,All institutions

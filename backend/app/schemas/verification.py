@@ -50,6 +50,7 @@ class AssignCaseRequest(BaseModel):
 
 
 class CaseCommentRequest(BaseModel):
+    evidence: bool = False
     comment: str
 
 

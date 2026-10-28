@@ -16,6 +16,7 @@ class VerificationCase(Base):
     student_id = Column(String(36), ForeignKey("students.id"), nullable=True)
     submission_id = Column(String(36), ForeignKey("submissions.id"), nullable=True)
     institution_id = Column(String(36), ForeignKey("institutions.id"), nullable=False)
+    rule_code = Column(String(30), nullable=True)  # validation rule that raised the case
     issue_type = Column(String(50), nullable=False)  # duplicate_enrollment, invalid_data, intake_mismatch, missing_documents
     title = Column(String(255), nullable=True)
     description = Column(Text, nullable=True)

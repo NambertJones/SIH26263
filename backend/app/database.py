@@ -52,6 +52,8 @@ def ensure_new_columns() -> None:
     from sqlalchemy import inspect, text
 
     added = {
+        "submissions": {"skipped_records": "INTEGER DEFAULT 0"},
+        "verification_cases": {"rule_code": "VARCHAR(30)"},
         "institutions": {
             "affiliating_university": "VARCHAR(255)",
             "established_year": "INTEGER",

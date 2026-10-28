@@ -1,6 +1,7 @@
 import { maskApaar } from '../lib/privacy';
 import React, { useState, useEffect } from 'react';
 import { reportsApi } from '../api/client';
+import { useToast } from '../contexts/ToastContext';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import {
   BarChart3,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
+  const { notify } = useToast();
   const [activeTab, setActiveTab] = useState<'enrollment' | 'discrepancy' | 'compliance' | 'institution'>('enrollment');
   const [enrollmentData, setEnrollmentData] = useState<any>(null);
   const [discrepancies, setDiscrepancies] = useState<any[]>([]);
@@ -44,9 +46,17 @@ export const ReportsPage: React.FC = () => {
     loadReports();
   }, [academicYear]);
 
-  const handleExportCSV = () => {
-    // Direct browser trigger to backend export endpoint
-    window.open('/api/reports/export?report_type=discrepancy', '_blank');
+  const [exporting, setExporting] = useState(false);
+  const handleExportCSV = async () => {
+    setExporting(true);
+    try {
+      await reportsApi.exportCsv('discrepancy');
+      notify('Report downloaded. Identifiers are masked; spreadsheet formulas are neutralised.', 'success');
+    } catch (err: any) {
+      notify(err.message || 'Export failed', 'error');
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
@@ -86,10 +96,11 @@ export const ReportsPage: React.FC = () => {
 
           <button
             onClick={handleExportCSV}
+            disabled={exporting}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs shadow-sm transition cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export CSV</span>
+            <span>{exporting ? 'Preparing…' : 'Export CSV'}</span>
           </button>
         </div>
       </div>

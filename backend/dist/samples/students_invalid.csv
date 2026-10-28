@@ -1,0 +1,31 @@
+student_name,apaar_id,dob,gender,programme,admission_date,status,category,roll_no,email,phone
+,110300000001,10/03/2006,Male,AIDS,20/08/2025,active,OBC,IIT25AIDS001,nikhil.fernandes.iit25aids001@student.ilampirai.example,0628118515
+Riya Rao,110300000002,,Female,AIDS,19/08/2025,active,General,IIT25AIDS002,riya.rao.iit25aids002@student.ilampirai.example,0586107038
+Farhan Khan,11AB00000003,08/07/2006,Male,AIDS,09/08/2025,active,EWS,IIT25AIDS003,farhan.khan.iit25aids003@student.ilampirai.example,0376459693
+Gurpreet Patel,11030000004,10/08/2007,Male,AIDS,03/08/2025,active,OBC,IIT25AIDS004,gurpreet.patel.iit25aids004@student.ilampirai.example,0249407143
+Meera Krishnan,1103000000050,17/02/2006,Female,AIDS,16/08/2025,active,SC,IIT25AIDS005,meera.krishnan.iit25aids005@student.ilampirai.example,0127186609
+Nikhil Khan,110300000006,11/09/2030,Male,AIDS,01/08/2025,active,SC,IIT25AIDS006,nikhil.khan.iit25aids006@student.ilampirai.example,0872663201
+Aarav Khan,110300000007,05/05/2014,Male,AIDS,18/08/2025,active,General,IIT25AIDS007,aarav.khan.iit25aids007@student.ilampirai.example,0913639396
+Diya Fernandes,110300000008,20/06/2006,Female,AIDS,01/01/2005,active,General,IIT25AIDS008,diya.fernandes.iit25aids008@student.ilampirai.example,0117474959
+Arjun Bhat,110300000009,14/06/2006,M,AIDS,18/08/2025,active,OBC,IIT25AIDS009,arjun.bhat.iit25aids009@student.ilampirai.example,0500737885
+Dhruv Chandran,110300000010,25/02/2006,Male,AIDS,01/08/2025,active,General,IIT25AIDS010,kavya.at.student.ilampirai,0234925303
+Aditya Krishnan,,13/01/2006,F,AIDS,14/08/2025,active,ST,IIT25AIDS011,no-at-sign,0229006006
+Kabir Das,110300000012,31/02/2006,Male,AIDS,11/08/2025,active,OBC,IIT25AIDS012,kabir.das.iit25aids012@student.ilampirai.example,0296886612
+Ayesha Joshi,110300000013,28/07/2007,Female,AIDS,12/08/2025,active,OBC,IIT25AIDS013,ayesha.joshi.iit25aids013@student.ilampirai.example,0128565270
+Myra Gill,110300000014,25/09/2006,Female,AIDS,16/08/2025,active,OBC,IIT25AIDS014,myra.gill.iit25aids014@student.ilampirai.example,0368387156
+Maria Subramanian,110300000015,02/04/2006,Female,AIDS,03/08/2025,active,SC,IIT25AIDS015,maria.subramanian.iit25aids015@student.ilampirai.example,0481616648
+Divya Kumar,110300000016,12/02/2007,Female,AIDS,10/08/2025,active,OBC,IIT25AIDS016,divya.kumar.iit25aids016@student.ilampirai.example,0566786681
+Dhruv Krishnan,110300000017,19/05/2007,Male,AIDS,09/08/2025,active,ST,IIT25AIDS017,dhruv.krishnan.iit25aids017@student.ilampirai.example,0307156112
+Varun Khan,110300000018,04/08/2006,Male,AIDS,15/08/2025,active,ST,IIT25AIDS018,varun.khan.iit25aids018@student.ilampirai.example,0494409768
+Divya Naidu,110300000019,05/06/2006,Female,AIDS,04/08/2025,active,SC,IIT25AIDS019,divya.naidu.iit25aids019@student.ilampirai.example,0309696353
+Manoj Shetty,110300000020,25/11/2006,Male,AIDS,08/08/2025,active,OBC,IIT25AIDS020,manoj.shetty.iit25aids020@student.ilampirai.example,0534364621
+Gurpreet Varghese,110300000021,09/06/2006,Male,AIDS,10/08/2025,active,General,IIT25AIDS021,gurpreet.varghese.iit25aids021@student.ilampirai.example,0853989270
+Myra Singh,110300000022,24/02/2006,Female,AIDS,10/08/2025,active,General,IIT25AIDS022,myra.singh.iit25aids022@student.ilampirai.example,0457016415
+Arjun Nair,110300000023,02/04/2006,Male,AIDS,15/08/2025,active,ST,IIT25AIDS023,arjun.nair.iit25aids023@student.ilampirai.example,0980677100
+Divya Chandran,110300000024,28/05/2006,Female,AIDS,19/08/2025,active,General,IIT25AIDS024,divya.chandran.iit25aids024@student.ilampirai.example,0129385724
+Lakshmi Chandran,110300000025,19/09/2006,Female,AIDS,15/08/2025,active,General,IIT25AIDS025,lakshmi.chandran.iit25aids025@student.ilampirai.example,0353378033
+Siddharth Patel,110300000026,22/01/2007,Male,AIDS,11/08/2025,active,General,IIT25AIDS026,siddharth.patel.iit25aids026@student.ilampirai.example,0461941727
+Varun Gill,110300000027,19/11/2006,Male,AIDS,20/08/2025,active,General,IIT25AIDS027,varun.gill.iit25aids027@student.ilampirai.example,0519844975
+Vivaan Iyer,110300000028,13/06/2007,Male,AIDS,04/08/2025,active,SC,IIT25AIDS028,vivaan.iyer.iit25aids028@student.ilampirai.example,0258536603
+Sai Fernandes,110300000029,14/10/2006,Male,AIDS,13/08/2025,active,OBC,IIT25AIDS029,sai.fernandes.iit25aids029@student.ilampirai.example,0592375557
+Naveen Singh,110300000030,23/10/2007,Male,AIDS,11/08/2025,active,ST,IIT25AIDS030,naveen.singh.iit25aids030@student.ilampirai.example,0654052127

@@ -28,6 +28,10 @@ const STYLES: Record<string, Style> = {
   mapping: { label: 'Mapping', cls: 'bg-blue-50 text-blue-800 border-blue-200', icon: CircleDot },
   uploaded: { label: 'Uploaded', cls: 'bg-blue-50 text-blue-800 border-blue-200', icon: CircleDot },
   submitted: { label: 'Submitted', cls: 'bg-blue-50 text-blue-800 border-blue-200', icon: CircleDot },
+  skipped: { label: 'Skipped (already on record)', cls: 'bg-slate-100 text-slate-600 border-slate-300', icon: Ban },
+  accepted: { label: 'Accepted by reviewer', cls: 'bg-emerald-50 text-emerald-800 border-emerald-200', icon: CheckCircle2 },
+  dismissed: { label: 'Dismissed', cls: 'bg-slate-100 text-slate-700 border-slate-300', icon: Ban },
+  superseded: { label: 'Superseded by correction', cls: 'bg-slate-100 text-slate-600 border-slate-300', icon: CircleDot },
 };
 
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, size = 'md' }) => {

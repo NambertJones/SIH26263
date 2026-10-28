@@ -87,6 +87,15 @@ npm run dev
 
 ---
 
+## 🎬 Demo, Test Data & Test Report
+
+* `demo-data/`: fictional upload files for every demo scenario (also downloadable from **Bulk Import**),
+  plus expected cases and accounts. See `demo-data/README_SYNTHETIC_DATA.md`.
+* `docs/SIH_DEMO_GUIDE.md`: step-by-step demonstration script, what to say, features and limitations.
+* `docs/TEST_REPORT.md`: results of the automated tests, the end-to-end dataset run and the browser walkthrough.
+* `docs/DEMO_RESET.md`: how to reset the live site and a local copy safely.
+* `backend/scripts/demo_e2e.py`: re-runs every scenario on a throwaway database (`69/69 checks passed`).
+
 ## 🛡️ Architecture & Verification Rules
 
 ```

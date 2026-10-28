@@ -78,9 +78,10 @@ export const ValidationResultsPage: React.FC = () => {
     if (!submission?.id) return;
     setSubmitting(true);
     try {
-      await submissionsApi.submit(submission.id);
-      setSuccessMsg('Batch submitted for oversight review. Review cases have been created for flagged records.');
-      setSubmission((prev: any) => ({ ...prev, status: 'submitted' }));
+      const summary = await submissionsApi.submit(submission.id);
+      setSuccessMsg(summary.message);
+      setSubmission((prev: any) => ({ ...prev, status: 'submitted', skipped_records: summary.skipped }));
+      setReloadKey((k) => k + 1); // re-read rows so skipped rows and new cases show their real state
     } catch (err: any) {
       notify(err.message || 'Failed to submit batch', 'error');
     } finally {
@@ -133,13 +134,15 @@ export const ValidationResultsPage: React.FC = () => {
 
         {institutionUser && (
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(`/mapping?submission_id=${submission?.id}`)}
-            className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Re-map Columns</span>
-          </button>
+          {submission?.status !== 'submitted' && (
+            <button
+              onClick={() => navigate(`/mapping?submission_id=${submission?.id}`)}
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Re-map Columns</span>
+            </button>
+          )}
 
           <button
             onClick={handleFinalSubmit}
@@ -164,8 +167,8 @@ export const ValidationResultsPage: React.FC = () => {
         </div>
       )}
 
-      {/* 4 Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           title="Total Evaluated"
           value={submission?.total_records || 0}
@@ -194,7 +197,18 @@ export const ValidationResultsPage: React.FC = () => {
           icon={<AlertTriangle className="w-5 h-5 text-amber-600" />}
           colorBorder="border-amber-100"
         />
+        <StatCard
+          title="Skipped"
+          value={submission?.skipped_records || 0}
+          subtitle="Already on record or repeated in the file — not imported again"
+          icon={<FileSpreadsheet className="w-5 h-5 text-slate-500" />}
+        />
       </div>
+      {submission?.status !== 'submitted' && (
+        <p className="text-xs text-slate-600 -mt-2">
+          These rows are a preview. Nothing is added to Student Records, the dashboard or the case queue until you submit.
+        </p>
+      )}
 
       {/* Filter Tabs & Search Bar */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -270,7 +284,7 @@ export const ValidationResultsPage: React.FC = () => {
                     <td className="py-3 px-4 font-mono text-blue-700 font-semibold">
                       {st.apaar_status === 'MISSING' ? <span className="text-rose-700 italic font-sans font-medium">Missing APAAR</span> : st.apaar_masked}
                     </td>
-                    <td className="py-3 px-4 text-slate-600 font-medium">{st.programme_name || 'CSE'}</td>
+                    <td className="py-3 px-4 text-slate-600 font-medium">{st.programme_name || '—'}</td>
                     <td className="py-3 px-4">
                       <StatusBadge status={st.validation_status} />
                     </td>

@@ -35,6 +35,8 @@ RULE_LABELS = {
     "INTAKE_EXCEED": "Above intake reference",
 }
 OPEN_STATUSES = ["open", "under_review", "pending", "escalated"]
+RULE_LABELS.update({"DUP_ROLL": "Roll number already used", "POSSIBLE_DUP_PERSON": "Possible same student",
+                    "REF_MISMATCH": "Differs from reference record"})
 
 
 @router.get("/summary")
@@ -94,8 +96,10 @@ def oversight_summary(
     issue_q = (
         db.query(ValidationIssue.rule_code, Student.institution_id, func.count(ValidationIssue.id))
         .join(Student, ValidationIssue.student_id == Student.id)
-        .filter(ValidationIssue.status == "open")
+        .filter(ValidationIssue.status == "open", Student.is_latest.is_(True), ValidationIssue.severity.in_(["error", "warning"]))
     )
+    from app.services.validation_engine import committed
+    issue_q = committed(issue_q)
     if eff_id:
         issue_q = issue_q.filter(Student.institution_id == eff_id)
     issue_rows = issue_q.group_by(ValidationIssue.rule_code, Student.institution_id).all()

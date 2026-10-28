@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useToast } from '../contexts/ToastContext';
 import { Pagination } from '../components/ui/Pagination';
 import { EmptyState, ErrorBanner, SkeletonRows } from '../components/ui/States';
-import { casesApi, usersApi } from '../api/client';
+import { casesApi, usersApi, studentsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
@@ -45,6 +45,8 @@ export const VerificationCasesPage: React.FC = () => {
   const [selectedCase, setSelectedCase] = useState<any>(null);
   const [caseModalOpen, setCaseModalOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [asEvidence, setAsEvidence] = useState(false);
+  const [reference, setReference] = useState<any>(null);
   const [actionReason, setActionReason] = useState('');
   const [reviewers, setReviewers] = useState<any[]>([]);
   const [selectedReviewer, setSelectedReviewer] = useState('');
@@ -109,6 +111,10 @@ export const VerificationCasesPage: React.FC = () => {
     try {
       const fullCase = await casesApi.get(c.id);
       setSelectedCase(fullCase);
+      setReference(null);
+      if (fullCase.issue_type === 'reference_mismatch' && fullCase.student_id) {
+        studentsApi.referenceComparison(fullCase.student_id).then(setReference).catch(() => setReference(null));
+      }
       setSelectedReviewer(fullCase.assigned_to || '');
       setCaseModalOpen(true);
       setActionReason('');
@@ -129,10 +135,12 @@ export const VerificationCasesPage: React.FC = () => {
     if (!selectedCase || !newComment.trim()) return;
     setActionLoading(true);
     try {
-      await casesApi.addComment(selectedCase.id, newComment);
+      await casesApi.addComment(selectedCase.id, newComment, asEvidence);
       const refreshed = await casesApi.get(selectedCase.id);
       setSelectedCase(refreshed);
       setNewComment('');
+      if (asEvidence) notify('Evidence recorded on the case.', 'success');
+      setAsEvidence(false);
       fetchCases();
     } catch (err: any) {
       notify(err.message || 'Failed to add comment', 'error');
@@ -242,6 +250,7 @@ export const VerificationCasesPage: React.FC = () => {
             { id: 'duplicate_enrollment', label: 'Duplicates' },
             { id: 'invalid_data', label: 'Invalid Data' },
             { id: 'intake_mismatch', label: 'Intake Discrepancy' },
+            { id: 'reference_mismatch', label: 'Reference Mismatch' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -309,7 +318,7 @@ export const VerificationCasesPage: React.FC = () => {
                 <th className="py-3 px-4 font-semibold">APAAR ID</th>
                 <th className="py-3 px-4 font-semibold">Type</th>
                 <th className="py-3 px-4 font-semibold">Status</th>
-                <th className="py-3 px-4 font-semibold">Assigned Reviewer</th>
+                <th className="py-3 px-4 font-semibold">Assigned to</th>
                 <th className="py-3 px-4 font-semibold text-right">Action</th>
               </tr>
             </thead>
@@ -400,7 +409,7 @@ export const VerificationCasesPage: React.FC = () => {
               const closed = status === 'resolved' || status === 'rejected';
               const canAssign = persona === 'inst_admin' && !closed;
               const canDecide = isCollege && !closed && (status !== 'escalated' || persona === 'inst_admin');
-              const canAwait = isCollege && !closed && status !== 'pending';
+              const canAwait = (isCollege || isOversight) && !closed && status !== 'pending';
               const canEscalate = (isOversight || persona === 'inst_admin') && !closed && status !== 'escalated';
               const canReReview = isOversight && closed;
               const anyAction = canDecide || canAwait || canEscalate || canReReview;
@@ -486,6 +495,56 @@ export const VerificationCasesPage: React.FC = () => {
                     </button>
                   </div>
 
+                  {!closed && (
+                    <label className="inline-flex items-center gap-2 text-xs text-slate-700 -mt-1">
+                      <input type="checkbox" className="w-4 h-4 accent-blue-600" checked={asEvidence} onChange={(e) => setAsEvidence(e.target.checked)} />
+                      Add as evidence (a case awaiting evidence returns to review)
+                    </label>
+                  )}
+
+                  {selectedCase.issue_type === 'reference_mismatch' && reference?.available && (
+                    <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                      <p className="font-semibold text-slate-900 mb-1">Institution record vs {reference.source}</p>
+                      <table className="w-full text-left text-[11px]">
+                        <thead>
+                          <tr className="text-slate-600 border-b border-slate-200">
+                            <th scope="col" className="py-1 pr-2">Field</th>
+                            <th scope="col" className="py-1 pr-2">Institution</th>
+                            <th scope="col" className="py-1 pr-2">Reference</th>
+                            <th scope="col" className="py-1">Result</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {reference.fields.map((f: any) => (
+                            <tr key={f.field} className="border-b border-slate-100">
+                              <th scope="row" className="py-1 pr-2 font-medium">{f.field}</th>
+                              <td className="py-1 pr-2">{f.institution_value || '—'}</td>
+                              <td className="py-1 pr-2">{f.reference_value || '—'}</td>
+                              <td className={`py-1 font-semibold ${f.match === false ? 'text-amber-900' : 'text-emerald-800'}`}>
+                                {f.match === null ? 'n/a' : f.match ? '✓ Matches' : '✗ Differs'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {selectedCase.matched_records?.length > 0 && (
+                    <div className="p-3 rounded-lg border border-slate-200 bg-white">
+                      <p className="font-semibold text-slate-900 mb-1">Records that may be the same student</p>
+                      <ul className="space-y-1">
+                        {selectedCase.matched_records.map((m: any, i: number) => (
+                          <li key={i} className="text-[11px] text-slate-700">
+                            <strong>{m.name}</strong>
+                            {m.roll_no ? ` · roll ${m.roll_no}` : ''} · {m.institution_name} · APAAR {m.apaar_masked}
+                            <span className="ml-1 text-amber-900 font-semibold">({m.match_reasons.join(', ')})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
                   {status === 'escalated' && persona === 'operator' && (
                     <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 flex items-start gap-2">
                       <HelpCircle className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
@@ -538,11 +597,13 @@ export const VerificationCasesPage: React.FC = () => {
                         )}
                         {canDecide && (
                           <>
+                            {selectedCase.issue_type !== 'invalid_data' && (
                             <button type="button" onClick={handleReject} disabled={actionLoading}
                               className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 rounded-lg text-xs font-semibold disabled:opacity-50">
                               <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
                               Dismiss — not an issue
                             </button>
+                            )}
                             <button type="button" onClick={handleResolve} disabled={actionLoading}
                               className="flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg text-xs disabled:opacity-50">
                               <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />

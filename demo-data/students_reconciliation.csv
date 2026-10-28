@@ -1,0 +1,17 @@
+student_name,apaar_id,dob,gender,programme,admission_date,status,category,roll_no,email,phone
+Harini Rao,110500000001,21/10/2001,Female,MTCS,10/08/2025,active,EWS,IIT25MTCS001,harini.rao.iit25mtcs001@student.ilampirai.example,0421206399
+Tenzin Chandran,110500000002,05/03/2000,Male,MTCS,19/08/2025,active,SC,IIT25MTCS002,tenzin.chandran.iit25mtcs002@student.ilampirai.example,0420241911
+Divya Bhat,110500000003,05/04/2001,Female,MTCS,12/08/2025,active,General,IIT25MTCS003,divya.bhat.iit25mtcs003@student.ilampirai.example,0758059058
+Karthik Gill,110500000004,21/07/2000,Male,MTCS,12/08/2025,active,OBC,IIT25MTCS004,karthik.gill.iit25mtcs004@student.ilampirai.example,0709888344
+Riya Subramanian,110500000005,27/02/2000,Female,MTCS,20/08/2025,active,SC,IIT25MTCS005,riya.subramanian.iit25mtcs005@student.ilampirai.example,0677352996
+Harini Singh,110500000006,19/09/2001,Female,MTCS,06/08/2025,active,SC,IIT25MTCS006,harini.singh.iit25mtcs006@student.ilampirai.example,0342385998
+Dhruv Pillai,110500000007,08/08/2001,Male,MTCS,01/08/2025,active,SC,IIT25MTCS007,dhruv.pillai.iit25mtcs007@student.ilampirai.example,0643845427
+Aditya Singh,110500000008,25/11/2000,Male,MTCS,07/08/2025,active,OBC,IIT25MTCS008,aditya.singh.iit25mtcs008@student.ilampirai.example,0297771111
+Aishwarya Varghese,110500000009,03/03/2000,Female,MTCS,04/08/2025,active,General,IIT25MTCS009,aishwarya.varghese.iit25mtcs009@student.ilampirai.example,0552716822
+Riya Pillai,110500000010,27/10/2001,Female,MTCS,07/08/2025,active,EWS,IIT25MTCS010,riya.pillai.iit25mtcs010@student.ilampirai.example,0643711982
+Maria Nair,110500000011,23/10/2001,Female,MTCS,04/08/2025,active,OBC,IIT25MTCS011,maria.nair.iit25mtcs011@student.ilampirai.example,0600871912
+Tenzin Chandran,110500000012,21/06/2001,Male,MTCS,20/08/2025,active,General,IIT25MTCS012,tenzin.chandran.iit25mtcs012@student.ilampirai.example,0501937588
+Naveen Khan,110500000013,19/08/2001,Male,MTCS,15/08/2025,active,OBC,IIT25MTCS013,naveen.khan.iit25mtcs013@student.ilampirai.example,0592504255
+Ananya Subramanian,110500000014,08/05/2001,Female,MTCS,13/08/2025,active,EWS,IIT25MTCS014,ananya.subramanian.iit25mtcs014@student.ilampirai.example,0886861812
+Arjun Nair,110500000015,19/08/2001,Male,MTCS,07/08/2025,active,OBC,IIT25MTCS015,arjun.nair.iit25mtcs015@student.ilampirai.example,0852875108
+Nisha Subramanian,110500000016,12/02/2001,Female,MTCS,13/08/2025,active,General,IIT25MTCS016,nisha.subramanian.iit25mtcs016@student.ilampirai.example,0952548524

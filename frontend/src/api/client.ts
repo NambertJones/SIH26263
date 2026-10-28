@@ -131,6 +131,12 @@ export const studentsApi = {
   get: (id: string) => request<any>(`/students/${id}`),
   getCases: (id: string) => request<any[]>(`/students/${id}/cases`),
   getAuditTrail: (id: string) => request<any[]>(`/students/${id}/audit-trail`),
+  create: (data: any) =>
+    request<any>('/students', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  referenceComparison: (id: string) => request<any>(`/students/${id}/reference-comparison`),
   revealApaar: (id: string, reason: string) =>
     request<{ apaar_id: string; visible_seconds: number }>(`/students/${id}/reveal-apaar`, {
       method: 'POST',
@@ -170,10 +176,10 @@ export const casesApi = {
       method: 'POST',
       body: JSON.stringify({ assigned_to: assignedTo }),
     }),
-  addComment: (id: string, comment: string) =>
+  addComment: (id: string, comment: string, evidence = false) =>
     request<any>(`/cases/${id}/comment`, {
       method: 'POST',
-      body: JSON.stringify({ comment }),
+      body: JSON.stringify({ comment, evidence }),
     }),
   requestClarification: (id: string, note: string) =>
     request<any>(`/cases/${id}/request-clarification`, {
@@ -227,6 +233,24 @@ export const reportsApi = {
   getCompliance: (institutionId?: string) =>
     request<any>(`/reports/compliance${institutionId ? `?institution_id=${institutionId}` : ''}`),
   getInstitutionWise: () => request<any[]>('/reports/institution-wise'),
+  /** Downloads the discrepancy CSV with the user's session (a plain link would carry no login). */
+  exportCsv: async (reportType = 'discrepancy') => {
+    const token = localStorage.getItem('token');
+    const res = await fetch(`${BASE_URL}/reports/export?report_type=${encodeURIComponent(reportType)}`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new ApiError(res.status, (await res.json().catch(() => ({}))).detail || res.statusText);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `discrepancy_report_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
   getIntakeReconciliation: (institutionId?: string) =>
     request<{ items: any[] }>(`/reports/intake-reconciliation${institutionId ? `?institution_id=${institutionId}` : ''}`),
 };

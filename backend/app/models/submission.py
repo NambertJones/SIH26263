@@ -24,6 +24,7 @@ class Submission(Base):
     valid_records = Column(Integer, default=0)
     error_records = Column(Integer, default=0)
     warning_records = Column(Integer, default=0)
+    skipped_records = Column(Integer, default=0)  # rows already on record or repeated in the file
     status = Column(String(30), default="uploaded")  # uploaded, mapping, validating, validated, submitted
     column_mapping = Column(JSON, nullable=True)  # User's column mapping config
     submitted_at = Column(DateTime, default=datetime.utcnow)

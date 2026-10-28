@@ -1,0 +1,30 @@
+file,row,roll_no,student_name,rule_code,case_type,expected_status_after_import,suggested_demo_path
+students_missing_apaar.csv,4,IIT25MCA004,Vihaan Sharma,MISSING_REQUIRED,invalid_data,open,Awaiting evidence → evidence added → Submit Correction → Resolve
+students_missing_apaar.csv,11,IIT25MCA011,Pooja Reddy,MISSING_REQUIRED,invalid_data,open,"Correct, then resolve"
+students_missing_apaar.csv,19,IIT25MCA019,Harini Sharma,MISSING_REQUIRED,invalid_data,open,"Correct, then resolve"
+students_missing_apaar.csv,27,IIT25MCA027,Meera Chandran,MISSING_REQUIRED,invalid_data,open,"Correct, then resolve"
+students_missing_apaar.csv,35,IIT25MCA035,Siddharth Naidu,MISSING_REQUIRED,invalid_data,open,"Correct, then resolve"
+students_invalid.csv,1,IIT25AIDS001,(blank),MISSING_REQUIRED,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,2,IIT25AIDS002,Riya Rao,MISSING_REQUIRED,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,3,IIT25AIDS003,Farhan Khan,FMT_APAAR,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,4,IIT25AIDS004,Gurpreet Patel,FMT_APAAR,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,5,IIT25AIDS005,Meera Krishnan,FMT_APAAR,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,6,IIT25AIDS006,Nikhil Khan,FMT_DOB,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,7,IIT25AIDS007,Aarav Khan,FMT_DOB,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,8,IIT25AIDS008,Diya Fernandes,DATE_INCONSIST,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,11,IIT25AIDS011,Aditya Krishnan,MISSING_REQUIRED,invalid_data,open,"Correct the record, then resolve"
+students_invalid.csv,12,IIT25AIDS012,Kabir Das,MISSING_REQUIRED,invalid_data,open,"Correct the record, then resolve"
+students_duplicates.csv,10,IIT25CSBS010,Myra Varghese,DUP_ROLL,duplicate_enrollment,open,Compare both rows → correct the roll number of the wrong one → resolve
+students_duplicates.csv,11,IIT25CSBS010,Saanvi Shetty,DUP_ROLL,duplicate_enrollment,open,Same case pair as row 10
+students_duplicates.csv,22,IIT25CSBS022,Harini Krishnan,POSSIBLE_DUP_PERSON,duplicate_enrollment,open,Check parents' names on forms → Dismiss: different students
+students_duplicates.csv,26,IIT25CSBS026,Kavya Kumar,DUP_APAAR_CROSS,duplicate_enrollment,open,Reviewer escalates → admin decides
+students_duplicates.csv,29,IIT25CSBS029,Kavya Varghese,DUP_APAAR_SAME,duplicate_enrollment,open,Correct the mistyped APAAR value → resolve
+students_duplicates.csv,30,IIT25CSBS030,Vivaan Pillai,DUP_APAAR_SAME,duplicate_enrollment,open,Same case pair as row 29
+students_reconciliation.csv,3,IIT25MTCS003,Divya Bhat,REF_MISMATCH,reference_mismatch,open,Compare fields → correct the record or resolve with evidence
+students_reconciliation.csv,6,IIT25MTCS006,Harini Singh,REF_MISMATCH,reference_mismatch,open,Compare fields → correct the record or resolve with evidence
+students_reconciliation.csv,9,IIT25MTCS009,Aishwarya Varghese,REF_MISMATCH,reference_mismatch,open,Compare fields → correct the record or resolve with evidence
+students_reconciliation.csv,12,IIT25MTCS012,Tenzin Chandran,REF_MISMATCH,reference_mismatch,open,Compare fields → correct the record or resolve with evidence
+students_intake_overflow.csv,16,IIT25MECHL016,Aarav Krishnan,INTAKE_EXCEED,intake_mismatch,open,Review intake; dismiss with approval letter or withdraw admission
+students_intake_overflow.csv,17,IIT25MECHL017,Diya Khan,INTAKE_EXCEED,intake_mismatch,open,Review intake; dismiss with approval letter or withdraw admission
+students_intake_overflow.csv,18,IIT25MECHL018,Farhan Varghese,INTAKE_EXCEED,intake_mismatch,open,Review intake; dismiss with approval letter or withdraw admission
+students_other_institution.csv,7,TCE25MCA007,Nikhil Naidu,MISSING_REQUIRED,invalid_data,open,Visible only to Tamravarni users and the oversight reviewer

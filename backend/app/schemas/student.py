@@ -42,6 +42,7 @@ class StudentCorrection(BaseModel):
     category: str | None = None
     institute_roll_no: str | None = None
     email: str | None = None
+    programme_id: str | None = None
     reason: str
 
 

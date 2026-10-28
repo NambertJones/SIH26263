@@ -19,6 +19,12 @@ from app.services.audit_service import log_event
 from app.services.privacy import mask_apaar, apaar_status
 from app.middleware.tenant import is_central_user, require_institution_member
 from pydantic import BaseModel
+from datetime import date
+from app.models.submission import Submission
+from app.models.reference import ReferenceRecord
+from app.services.validation_engine import (
+    committed, latest_version, version_chain_ids, revalidate_student, open_case_if_needed, norm_name, case_title,
+)
 
 router = APIRouter(prefix="/api/students", tags=["Students"])
 
@@ -38,6 +44,9 @@ def list_students(
     """List students with filtering and search."""
     eff_id = get_effective_institution_id(current_user, institution_id)
     query = db.query(Student).filter(Student.is_latest.is_(True))
+    # Records are "on record" once their file is submitted; a file's own validation page may show its drafts
+    if not submission_id:
+        query = committed(query)
 
     if eff_id:
         query = query.filter(Student.institution_id == eff_id)
@@ -126,8 +135,10 @@ def get_student(
         "created_at": i.created_at,
     } for i in issues]
 
-    # Fetch cases
-    cases = db.query(VerificationCase).filter(VerificationCase.student_id == s.id).all()
+    # Cases follow the student across versions
+    chain = version_chain_ids(db, s)
+    current = latest_version(db, s)
+    cases = db.query(VerificationCase).filter(VerificationCase.student_id.in_(chain)).all()
     cases_list = [{
         "id": c.id,
         "issue_type": c.issue_type,
@@ -189,6 +200,8 @@ def get_student(
         "created_at": s.created_at,
         "updated_at": s.updated_at,
         "issues": issues_list,
+        "is_current": current.id == s.id,
+        "latest_version_id": current.id,
         "cases": cases_list,
         "version_history": version_history,
     }
@@ -266,10 +279,20 @@ def get_student_audit_trail(
 
     logs = db.query(AuditLog).filter(
         AuditLog.entity_type == "student",
-        AuditLog.entity_id == student_id,
+        AuditLog.entity_id.in_(version_chain_ids(db, s)),
     ).order_by(AuditLog.created_at.desc()).all()
 
     return logs
+
+
+CORRECTABLE = ["name", "apaar_id", "date_of_birth", "gender", "enrollment_status", "category", "institute_roll_no", "email",
+               "programme_id"]
+
+
+def _shown(field: str, value) -> str:
+    if value is None or value == "":
+        return "—"
+    return mask_apaar(value) if field == "apaar_id" else str(value)
 
 
 @router.put("/{student_id}/correct")
@@ -279,63 +302,172 @@ def correct_student_record(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Submit a correction creating a new immutable version of student record."""
-    old_student = db.query(Student).filter(Student.id == student_id, Student.is_latest.is_(True)).first()
-    if not old_student:
-        raise HTTPException(status_code=404, detail="Active student record not found")
-
+    """Correct a record by creating a new version. Works from any version's ID: the change is applied
+    to the student's current version, the previous version is preserved, and the record is re-checked."""
+    requested = db.query(Student).filter(Student.id == student_id).first()
+    if not requested:
+        raise HTTPException(status_code=404, detail="Student record not found")
     require_institution_member(current_user, "correct student records")
-    get_effective_institution_id(current_user, old_student.institution_id)
+    get_effective_institution_id(current_user, requested.institution_id)
 
+    old = latest_version(db, requested)
+    if not old.is_latest:
+        raise HTTPException(status_code=409, detail="This record is not active (it was skipped or superseded) and cannot be corrected.")
     if not correction.reason or len(correction.reason.strip()) < 5:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A detailed justification reason is mandatory for record corrections.",
-        )
+        raise HTTPException(status_code=400, detail="A reason (at least 5 characters) is required for every correction.")
 
-    # Mark old version as not latest
-    old_student.is_latest = False
-    old_student.updated_at = datetime.utcnow()
+    updates = {f: getattr(correction, f) for f in CORRECTABLE if getattr(correction, f) is not None}
+    if isinstance(updates.get("apaar_id"), str):
+        updates["apaar_id"] = updates["apaar_id"].replace(" ", "").replace("-", "").strip() or None
+    if isinstance(updates.get("institute_roll_no"), str):
+        updates["institute_roll_no"] = updates["institute_roll_no"].strip().upper()
+    if updates.get("programme_id") and not db.query(Programme).filter(
+            Programme.id == updates["programme_id"], Programme.institution_id == old.institution_id).first():
+        raise HTTPException(status_code=400, detail="That programme does not belong to this college.")
+    changed = {f: (getattr(old, f), v) for f, v in updates.items() if getattr(old, f) != v}
+    if not changed:
+        raise HTTPException(status_code=400, detail="Nothing to change: the values entered match the current record.")
 
-    # Create new version
-    new_student = Student(
-        institution_id=old_student.institution_id,
-        submission_id=old_student.submission_id,
-        apaar_id=correction.apaar_id if correction.apaar_id is not None else old_student.apaar_id,
-        name=correction.name if correction.name is not None else old_student.name,
-        date_of_birth=correction.date_of_birth if correction.date_of_birth is not None else old_student.date_of_birth,
-        gender=correction.gender if correction.gender is not None else old_student.gender,
-        programme_id=old_student.programme_id,
-        enrollment_date=old_student.enrollment_date,
-        enrollment_status=correction.enrollment_status if correction.enrollment_status is not None else old_student.enrollment_status,
-        category=correction.category if correction.category is not None else old_student.category,
-        institute_roll_no=correction.institute_roll_no if correction.institute_roll_no is not None else old_student.institute_roll_no,
-        email=correction.email if correction.email is not None else old_student.email,
-        phone=old_student.phone,
-        row_number=old_student.row_number,
-        validation_status="valid",  # Correction marks as verified
-        remarks=f"Corrected: {correction.reason}",
-        version=old_student.version + 1,
-        is_latest=True,
-        previous_version_id=old_student.id,
+    old.is_latest = False
+    old.updated_at = datetime.utcnow()
+    new = Student(
+        institution_id=old.institution_id,
+        submission_id=old.submission_id,
+        apaar_id=old.apaar_id, name=old.name, date_of_birth=old.date_of_birth, gender=old.gender,
+        programme_id=old.programme_id, enrollment_date=old.enrollment_date, enrollment_status=old.enrollment_status,
+        category=old.category, institute_roll_no=old.institute_roll_no, email=old.email, phone=old.phone,
+        row_number=old.row_number, version=old.version + 1, is_latest=True, previous_version_id=old.id,
     )
-    db.add(new_student)
-    db.commit()
-    db.refresh(new_student)
+    for f, (_, v) in changed.items():
+        setattr(new, f, v)
+    db.add(new)
+    db.flush()
 
-    # Audit log
+    # The older version's open issues are superseded; the new version is re-checked against the rules
+    old_issues = db.query(ValidationIssue).filter(ValidationIssue.student_id == old.id, ValidationIssue.status == "open")
+    old_issues.update({"status": "superseded"}, synchronize_session=False)
+    status_after, issues = revalidate_student(db, new)
+    new.remarks = f"Corrected: {correction.reason.strip()}" + ("" if status_after == "valid" else f" — {new.remarks}")
+
+    # Open cases move to the new version so their history stays with the student
+    summary = ", ".join(f"{f}: {_shown(f, a)} → {_shown(f, b)}" for f, (a, b) in changed.items())
+    open_cases = db.query(VerificationCase).filter(
+        VerificationCase.student_id.in_(version_chain_ids(db, old)),
+        VerificationCase.status.in_(["open", "under_review", "pending", "escalated"]),
+    ).all()
+    for case in open_cases:
+        case.student_id = new.id
+        case.title = case_title(new)
+        db.add(CaseEvent(case_id=case.id, actor_id=current_user.id, event_type="correction",
+                         description=f"Record corrected to version {new.version} ({summary}). Reason: {correction.reason.strip()}. "
+                                     f"Re-check result: {status_after}."))
+    db.commit()
+    db.refresh(new)
+
     log_event(
         db=db,
         action="correction",
         actor_id=current_user.id,
         actor_email=current_user.email,
         entity_type="student",
-        entity_id=new_student.id,
-        description=f"Created version {new_student.version} for student {new_student.name}. Reason: {correction.reason}",
+        entity_id=new.id,
+        description=f"Version {new.version} of {new.name} ({new.institute_roll_no}): {summary}. Reason: {correction.reason.strip()}",
+        metadata={"role": current_user.role, "previous_version_id": old.id, "changed_fields": list(changed),
+                  "validation_status": status_after},
     )
-
     return {
-        "message": "Student record updated successfully (new version created)",
-        "student_id": new_student.id,
-        "version": new_student.version,
+        "message": "Correction saved as a new version.",
+        "student_id": new.id,
+        "previous_version_id": old.id,
+        "version": new.version,
+        "validation_status": status_after,
+        "remaining_issues": [i["description"] for i in issues],
     }
+
+
+class StudentCreate(BaseModel):
+    name: str
+    programme_id: str
+    institute_roll_no: str
+    apaar_id: str | None = None
+    date_of_birth: date | None = None
+    gender: str | None = None
+    enrollment_date: date | None = None
+    category: str | None = None
+    email: str | None = None
+    phone: str | None = None
+
+
+@router.post("")
+def create_student(
+    body: StudentCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Add one student by hand. The record is checked with the same rules as an upload."""
+    require_institution_member(current_user, "add student records")
+    prog = db.query(Programme).filter(Programme.id == body.programme_id,
+                                      Programme.institution_id == current_user.institution_id).first()
+    if not prog:
+        raise HTTPException(status_code=400, detail="Choose one of your institution's programmes.")
+    if not body.name.strip() or not body.institute_roll_no.strip():
+        raise HTTPException(status_code=400, detail="Name and roll number are required.")
+
+    manual = db.query(Submission).filter(Submission.institution_id == current_user.institution_id,
+                                         Submission.file_name == "Manual entry").first()
+    if not manual:
+        manual = Submission(institution_id=current_user.institution_id, uploaded_by=current_user.id,
+                            file_name="Manual entry", status="submitted", academic_year=prog.academic_year)
+        db.add(manual)
+        db.flush()
+
+    s = Student(
+        institution_id=current_user.institution_id, submission_id=manual.id, programme_id=prog.id,
+        name=body.name.strip(), institute_roll_no=body.institute_roll_no.strip().upper(),
+        apaar_id=(body.apaar_id or "").replace(" ", "").replace("-", "") or None,
+        date_of_birth=body.date_of_birth, gender=body.gender, enrollment_date=body.enrollment_date,
+        category=body.category, email=body.email, phone=body.phone,
+        enrollment_status="active", is_latest=True, version=1,
+    )
+    db.add(s)
+    db.flush()
+    status_after, issues = revalidate_student(db, s)
+    db.flush()
+    case_opened = open_case_if_needed(db, s, current_user.id)
+    manual.total_records = (manual.total_records or 0) + 1
+    db.commit()
+    log_event(db=db, action="student_created", actor_id=current_user.id, actor_email=current_user.email,
+              entity_type="student", entity_id=s.id,
+              description=f"Added {s.name} ({s.institute_roll_no}) to {prog.code} by manual entry. Check result: {status_after}.",
+              metadata={"role": current_user.role})
+    return {"student_id": s.id, "validation_status": status_after, "issues": [i["description"] for i in issues],
+            "case_opened": case_opened}
+
+
+@router.get("/{student_id}/reference-comparison")
+def reference_comparison(
+    student_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Field-by-field comparison with the sandbox reference record for this APAAR ID, if one exists."""
+    s = db.query(Student).filter(Student.id == student_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="Student not found")
+    get_effective_institution_id(current_user, s.institution_id)
+    ref = db.query(ReferenceRecord).filter(ReferenceRecord.apaar_id == (s.apaar_id or "").strip()).first() if s.apaar_id else None
+    if not ref:
+        return {"available": False, "source": None, "fields": []}
+
+    def row(label, ours, theirs, same):
+        return {"field": label, "institution_value": ours, "reference_value": theirs, "match": same}
+
+    fields = [
+        row("Name", s.name, ref.name, norm_name(s.name) == norm_name(ref.name)),
+        row("Date of birth", s.date_of_birth.isoformat() if s.date_of_birth else None,
+            ref.date_of_birth.isoformat() if ref.date_of_birth else None,
+            None if not (s.date_of_birth and ref.date_of_birth) else s.date_of_birth == ref.date_of_birth),
+        row("Gender", s.gender, ref.gender,
+            None if not (s.gender and ref.gender) else s.gender.strip().lower() == ref.gender.strip().lower()),
+    ]
+    return {"available": True, "source": ref.source, "apaar_masked": mask_apaar(ref.apaar_id), "fields": fields}

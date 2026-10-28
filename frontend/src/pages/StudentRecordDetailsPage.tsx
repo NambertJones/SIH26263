@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { studentsApi } from '../api/client';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { institutionsApi, studentsApi } from '../api/client';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { Modal } from '../components/ui/Modal';
 import { MaskedApaar } from '../components/ui/MaskedApaar';
 import { PageLoading } from '../components/ui/States';
 import { formatIST } from '../lib/format';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { isCentralUser } from '../lib/privacy';
 import {
   User,
@@ -24,6 +25,8 @@ export const StudentRecordDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const canCorrect = !isCentralUser(user);
+  const { notify } = useToast();
+  const [reference, setReference] = useState<any>(null);
 
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +38,9 @@ export const StudentRecordDetailsPage: React.FC = () => {
   const [corrApaar, setCorrApaar] = useState('');
   const [corrDob, setCorrDob] = useState('');
   const [corrGender, setCorrGender] = useState('');
+  const [corrRoll, setCorrRoll] = useState('');
+  const [corrProgramme, setCorrProgramme] = useState('');
+  const [programmes, setProgrammes] = useState<any[]>([]);
   const [corrReason, setCorrReason] = useState('');
   const [savingCorr, setSavingCorr] = useState(false);
   const [corrError, setCorrError] = useState<string | null>(null);
@@ -45,12 +51,18 @@ export const StudentRecordDetailsPage: React.FC = () => {
       setLoading(true);
       const data = await studentsApi.get(id);
       setStudent(data);
+      studentsApi.referenceComparison(id).then(setReference).catch(() => setReference(null));
 
       setCorrName(data.name || '');
       // The full APAAR ID is never sent to the browser; leave blank to keep the current value
       setCorrApaar('');
       setCorrDob(data.date_of_birth ? data.date_of_birth.substring(0, 10) : '');
       setCorrGender(data.gender || '');
+      setCorrRoll(data.institute_roll_no || '');
+      setCorrProgramme(data.programme_id || '');
+      if (data.institution_id && !isCentralUser(user)) {
+        institutionsApi.getProgrammes(data.institution_id).then(setProgrammes).catch(() => setProgrammes([]));
+      }
     } catch (err) {
       console.error('Error fetching student record:', err);
     } finally {
@@ -73,17 +85,27 @@ export const StudentRecordDetailsPage: React.FC = () => {
     setSavingCorr(true);
     setCorrError(null);
     try {
-      await studentsApi.correct(id, {
+      const res = await studentsApi.correct(id, {
         name: corrName,
         // Only send fields the user actually filled in, so blanks never overwrite stored values
         apaar_id: corrApaar.trim() || undefined,
         date_of_birth: corrDob || undefined,
         gender: corrGender || undefined,
+        institute_roll_no: corrRoll.trim() && corrRoll.trim() !== student.institute_roll_no ? corrRoll.trim() : undefined,
+        programme_id: corrProgramme && corrProgramme !== student.programme_id ? corrProgramme : undefined,
         reason: corrReason,
       });
       setIsModalOpen(false);
       setCorrReason('');
-      await fetchStudentData();
+      notify(
+        res.validation_status === 'valid'
+          ? `Saved as version ${res.version}. The record now passes all checks.`
+          : `Saved as version ${res.version}, but the record still has issues: ${res.remaining_issues.join(' ')}`,
+        res.validation_status === 'valid' ? 'success' : 'error',
+      );
+      // Always continue on the new current version (the old ID now points to a past version)
+      if (res.student_id !== id) navigate(`/students/${res.student_id}`, { replace: true });
+      else await fetchStudentData();
     } catch (err: any) {
       setCorrError(err.message || 'Correction failed.');
     } finally {
@@ -143,6 +165,18 @@ export const StudentRecordDetailsPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {student.is_current === false && (
+        <div role="status" className="p-4 bg-blue-50 border border-blue-300 rounded-xl text-xs text-blue-900 flex flex-wrap items-center justify-between gap-2">
+          <span>
+            You are viewing <strong>version {student.version}</strong>, a past version kept for the record. Corrections are
+            always applied to the current version.
+          </span>
+          <Link to={`/students/${student.latest_version_id}`} className="font-semibold underline">
+            Open the current version
+          </Link>
+        </div>
+      )}
 
       {/* Duplicate Alert Banner */}
       {hasDuplicate && (
@@ -215,7 +249,7 @@ export const StudentRecordDetailsPage: React.FC = () => {
           }`}
         >
           <FileCheck2 className="w-3.5 h-3.5" />
-          <span>Issues & Cases ({student.issues?.length || 0})</span>
+          <span>Issues & Cases ({(student.issues?.length || 0) + (student.cases || []).filter((c: any) => !['resolved', 'rejected'].includes(c.status)).length})</span>
         </button>
 
         <button
@@ -281,6 +315,43 @@ export const StudentRecordDetailsPage: React.FC = () => {
         </div>
       )}
 
+      {activeTab === 'details' && reference?.available && (
+        <section aria-labelledby="ref-compare" className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs text-xs">
+          <h2 id="ref-compare" className="text-sm font-bold text-slate-900">Reconciliation with reference record</h2>
+          <p className="text-slate-600 mt-0.5">
+            {reference.source} for APAAR ID {reference.apaar_masked}. Differences need a human review; they are not proof of an error.
+          </p>
+          <table className="w-full text-left mt-3">
+            <thead>
+              <tr className="border-b border-slate-200 text-slate-700">
+                <th scope="col" className="py-2 pr-3 font-semibold">Field</th>
+                <th scope="col" className="py-2 pr-3 font-semibold">Institution record</th>
+                <th scope="col" className="py-2 pr-3 font-semibold">Reference record</th>
+                <th scope="col" className="py-2 font-semibold">Result</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {reference.fields.map((f: any) => (
+                <tr key={f.field}>
+                  <th scope="row" className="py-2 pr-3 font-medium text-slate-600">{f.field}</th>
+                  <td className="py-2 pr-3">{f.institution_value || '—'}</td>
+                  <td className="py-2 pr-3">{f.reference_value || '—'}</td>
+                  <td className="py-2">
+                    {f.match === null ? (
+                      <span className="text-slate-500">Not available</span>
+                    ) : f.match ? (
+                      <span className="font-semibold text-emerald-800">✓ Matches</span>
+                    ) : (
+                      <span className="font-semibold text-amber-900">✗ Differs</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      )}
+
       {/* Tab 2: Issues & Cases */}
       {activeTab === 'issues' && (
         <div className="space-y-4">
@@ -289,14 +360,15 @@ export const StudentRecordDetailsPage: React.FC = () => {
             {student.issues && student.issues.length > 0 ? (
               <div className="space-y-3">
                 {student.issues.map((iss: any) => (
-                  <div key={iss.id} className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-xs flex items-start gap-3">
-                    <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                  <div key={iss.id} className={`p-3 rounded-lg text-xs flex items-start gap-3 border ${iss.status === 'open' ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'}`}>
+                    <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${iss.status === 'open' ? 'text-rose-600' : 'text-slate-400'}`} aria-hidden="true" />
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-rose-800">{iss.rule_code}</span>
-                        <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-bold text-slate-900">{iss.rule_code}</span>
+                        <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded-full bg-white text-slate-700 border border-slate-300">
                           {iss.severity}
                         </span>
+                        {iss.status !== 'open' && <StatusBadge status={iss.status} size="sm" />}
                       </div>
                       <p className="text-slate-700 mt-0.5 font-medium">{iss.description}</p>
                     </div>
@@ -406,6 +478,33 @@ export const StudentRecordDetailsPage: React.FC = () => {
               maxLength={14}
               className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="corr-roll" className="block text-xs font-semibold text-slate-700 mb-1">Roll Number</label>
+              <input
+                id="corr-roll"
+                type="text"
+                value={corrRoll}
+                onChange={(e) => setCorrRoll(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 font-mono focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
+              />
+            </div>
+            <div>
+              <label htmlFor="corr-programme" className="block text-xs font-semibold text-slate-700 mb-1">Programme</label>
+              <select
+                id="corr-programme"
+                value={corrProgramme}
+                onChange={(e) => setCorrProgramme(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 font-medium"
+              >
+                <option value="">Not set</option>
+                {programmes.map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

@@ -11,16 +11,18 @@ import { isCentralUser } from '../lib/privacy';
 
 const PAGE_SIZE = 15;
 
-type Agreement = 'agree' | 'disagree' | 'missing';
+type Agreement = 'agree' | 'disagree' | 'missing' | 'hidden';
 
 const AGREEMENT: Record<Agreement, { label: string; cls: string; icon: React.ReactNode }> = {
   agree: { label: 'Agree', cls: 'text-emerald-800 bg-emerald-50 border-emerald-200', icon: <Check className="w-3.5 h-3.5" aria-hidden="true" /> },
   disagree: { label: 'Differs', cls: 'text-amber-900 bg-amber-50 border-amber-300', icon: <X className="w-3.5 h-3.5" aria-hidden="true" /> },
   missing: { label: 'Missing', cls: 'text-slate-700 bg-slate-100 border-slate-300', icon: <Minus className="w-3.5 h-3.5" aria-hidden="true" /> },
+  hidden: { label: 'Hidden', cls: 'text-slate-700 bg-slate-100 border-slate-300', icon: <Minus className="w-3.5 h-3.5" aria-hidden="true" /> },
 };
 
 function compare(a?: string | null, b?: string | null, hidden = false): Agreement {
-  if (hidden || !a || !b) return 'missing';
+  if (hidden) return 'hidden';
+  if (!a || !b) return 'missing';
   return a.trim().toLowerCase() === b.trim().toLowerCase() ? 'agree' : 'disagree';
 }
 
@@ -131,7 +133,7 @@ export const DuplicateReviewPage: React.FC = () => {
           Duplicate Review
         </h1>
         <p className="text-xs text-slate-600 mt-1 max-w-3xl">
-          Records flagged because the same APAAR ID appears more than once. A match is a reason to review, not proof of a duplicate
+          Records flagged because they share an APAAR ID, a roll number, or a name and date of birth. A match is a reason to review, not proof of a duplicate
           or of wrongdoing. Legitimate reasons include transfers, completed earlier programmes and data-entry errors.
         </p>
       </div>
@@ -224,8 +226,9 @@ export const DuplicateReviewPage: React.FC = () => {
                 <StatusBadge status={detail.status} />
               </div>
               <p className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
-                <strong>Why this pair was selected:</strong> exact match on APAAR ID (rule: same 12-digit value on two current records).
-                Names and dates are compared below to help the reviewer decide.
+                <strong>Why this pair was selected:</strong>{' '}
+                {match?.match_reasons?.length ? match.match_reasons.join(', ') : 'possible duplicate flagged by the upload checks'}.
+                The fields are compared below; matching names alone do not make two records the same student.
               </p>
 
               {!match ? (
@@ -250,13 +253,19 @@ export const DuplicateReviewPage: React.FC = () => {
                         <th scope="row" className="py-2 pr-3 font-medium text-slate-600">APAAR ID (masked)</th>
                         <td className="py-2 pr-3 font-mono">{detail.student_apaar_id}</td>
                         <td className="py-2 pr-3 font-mono">{match.apaar_masked}</td>
-                        <td className="py-2"><AgreementTag value="agree" /></td>
+                        <td className="py-2"><AgreementTag value={match.apaar_matches ? 'agree' : 'disagree'} /></td>
+                      </tr>
+                      <tr>
+                        <th scope="row" className="py-2 pr-3 font-medium text-slate-600">Roll number</th>
+                        <td className="py-2 pr-3 font-mono">{record?.institute_roll_no || '—'}</td>
+                        <td className="py-2 pr-3 font-mono">{match.roll_no || (hidden ? 'Hidden' : '—')}</td>
+                        <td className="py-2"><AgreementTag value={compare(record?.institute_roll_no, match.roll_no, hidden)} /></td>
                       </tr>
                       <tr>
                         <th scope="row" className="py-2 pr-3 font-medium text-slate-600">Name</th>
                         <td className="py-2 pr-3">{detail.student_name}</td>
                         <td className="py-2 pr-3">{match.name}</td>
-                        <td className="py-2"><AgreementTag value={hidden ? 'missing' : match.name_matches ? 'agree' : 'disagree'} /></td>
+                        <td className="py-2"><AgreementTag value={hidden ? 'hidden' : match.name_matches ? 'agree' : 'disagree'} /></td>
                       </tr>
                       <tr>
                         <th scope="row" className="py-2 pr-3 font-medium text-slate-600">Date of birth</th>

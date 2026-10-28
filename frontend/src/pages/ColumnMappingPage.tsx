@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImportStepper } from '../components/ui/ImportStepper';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { submissionsApi } from '../api/client';
+import { institutionsApi, submissionsApi } from '../api/client';
 import { Split, ArrowLeft, ArrowRight, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
 
 const REQUIRED_FIELDS = [
@@ -30,6 +30,8 @@ export const ColumnMappingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [programmes, setProgrammes] = useState<any[]>([]);
+  const [defaultProgramme, setDefaultProgramme] = useState('');
 
   useEffect(() => {
     async function loadData() {
@@ -55,6 +57,8 @@ export const ColumnMappingPage: React.FC = () => {
           submissionsApi.getPreview(submissionId),
         ]);
         setSubmission(sub);
+        setDefaultProgramme(sub.programme_id || '');
+        if (sub.institution_id) institutionsApi.getProgrammes(sub.institution_id).then(setProgrammes).catch(() => setProgrammes([]));
         setColumns(prev.columns || []);
         setPreviewRows(prev.preview_rows || []);
         setMappings(prev.auto_mappings || {});
@@ -82,11 +86,15 @@ export const ColumnMappingPage: React.FC = () => {
       setError(`Please map all mandatory fields: ${missing.map((m) => m.label).join(', ')}`);
       return;
     }
+    if (!mappings.programme && !defaultProgramme) {
+      setError('Map the Programme / Branch column, or choose the programme for this file.');
+      return;
+    }
 
     setSaving(true);
     setError(null);
     try {
-      await submissionsApi.mapColumns(submissionId, { mapping: mappings });
+      await submissionsApi.mapColumns(submissionId, { mapping: mappings, programme_id: defaultProgramme || undefined });
       await submissionsApi.validate(submissionId);
       navigate(`/validation?submission_id=${submissionId}`);
     } catch (err: any) {
@@ -128,6 +136,24 @@ export const ColumnMappingPage: React.FC = () => {
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Upload Different File</span>
         </button>
+      </div>
+
+      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <label htmlFor="default-programme" className="text-xs font-semibold text-slate-700 sm:w-64">
+          Programme for this file
+          <span className="block font-normal text-slate-500">Used for rows whose programme column is empty</span>
+        </label>
+        <select
+          id="default-programme"
+          value={defaultProgramme}
+          onChange={(e) => setDefaultProgramme(e.target.value)}
+          className="flex-1 border border-slate-300 rounded-lg px-3 py-2 text-xs bg-white"
+        >
+          <option value="">Take it from each row's Programme / Branch column</option>
+          {programmes.map((p) => (
+            <option key={p.id} value={p.id}>{p.code} — {p.name}</option>
+          ))}
+        </select>
       </div>
 
       {error && (

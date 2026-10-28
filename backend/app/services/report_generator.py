@@ -5,6 +5,7 @@ from sqlalchemy import func
 
 from app.services.privacy import mask_apaar
 from app.models.student import Student
+from app.services.validation_engine import committed
 from app.models.submission import Submission
 from app.models.institution import Programme, Institution
 from app.models.validation import ValidationIssue
@@ -14,7 +15,7 @@ from app.models.audit import AuditLog
 
 def get_dashboard_stats(db: Session, institution_id: str | None = None) -> dict:
     """Calculate summary dashboard stats."""
-    student_query = db.query(Student).filter(Student.is_latest.is_(True))
+    student_query = committed(db.query(Student)).filter(Student.is_latest.is_(True))
     submission_query = db.query(Submission)
     case_query = db.query(VerificationCase)
     prog_query = db.query(Programme)
@@ -32,7 +33,7 @@ def get_dashboard_stats(db: Session, institution_id: str | None = None) -> dict:
 
     total_submissions = submission_query.count()
     total_programmes = prog_query.count()
-    open_cases = case_query.filter(VerificationCase.status.in_(["open", "under_review", "pending"])).count()
+    open_cases = case_query.filter(VerificationCase.status.in_(["open", "under_review", "pending", "escalated"])).count()
 
     valid_pct = round((valid_records / total_students * 100), 1) if total_students > 0 else 0.0
     pending_pct = round((pending_verification / total_students * 100), 1) if total_students > 0 else 0.0
@@ -62,7 +63,7 @@ def get_enrollment_by_program(db: Session, institution_id: str | None = None) ->
     data = []
 
     for p in programmes:
-        enrolled_count = db.query(Student).filter(
+        enrolled_count = committed(db.query(Student)).filter(
             Student.programme_id == p.id,
             Student.is_latest.is_(True),
             Student.enrollment_status == "active",
@@ -122,16 +123,21 @@ def get_recent_activity(db: Session, institution_id: str | None = None, limit: i
     return feed
 
 
-def get_discrepancy_report(db: Session, institution_id: str | None = None) -> list[dict]:
-    """Generate detailed discrepancy items for export and reports screen."""
-    query = db.query(ValidationIssue, Student).outerjoin(
-        Student, ValidationIssue.student_id == Student.id
+def get_discrepancy_report(db: Session, institution_id: str | None = None, limit: int | None = 500) -> list[dict]:
+    """Open issues on current, committed records (drafts, skipped rows and superseded versions excluded)."""
+    query = committed(
+        db.query(ValidationIssue, Student).join(Student, ValidationIssue.student_id == Student.id)
+    ).filter(
+        Student.is_latest.is_(True),
+        ValidationIssue.status == "open",
+        ValidationIssue.severity.in_(["error", "warning"]),
     )
 
     if institution_id:
         query = query.filter(Student.institution_id == institution_id)
 
-    issues = query.order_by(ValidationIssue.created_at.desc()).limit(200).all()
+    query = query.order_by(ValidationIssue.created_at.desc())
+    issues = query.limit(limit).all() if limit else query.all()
 
     report = []
     for issue, student in issues:
@@ -144,6 +150,7 @@ def get_discrepancy_report(db: Session, institution_id: str | None = None) -> li
             "row_number": issue.row_number,
             "status": issue.status,
             "student_name": student.name if student else "N/A",
+            "roll_no": student.institute_roll_no if student else None,
             "student_apaar_id": mask_apaar(student.apaar_id) if student else None,
             "created_at": issue.created_at.isoformat() if issue.created_at else None,
         })
@@ -157,7 +164,7 @@ def get_compliance_report(db: Session, institution_id: str | None = None) -> dic
     programmes = get_enrollment_by_program(db, institution_id)
 
     exceeded_count = sum(1 for p in programmes if p["enrolled_count"] > p["approved_intake"])
-    duplicate_count = db.query(Student).filter(
+    duplicate_count = committed(db.query(Student)).filter(
         Student.is_latest.is_(True),
         Student.validation_status == "duplicate",
     )
@@ -210,12 +217,12 @@ def get_intake_reconciliation(db: Session, institution_id: str | None = None) ->
             .order_by(IntakeReference.created_at.desc())
             .first()
         )
-        enrolled = db.query(Student).filter(
+        enrolled = committed(db.query(Student)).filter(
             Student.programme_id == p.id,
             Student.is_latest.is_(True),
             Student.enrollment_status.in_(INTAKE_COUNTED_STATUSES),
         ).count()
-        excluded = db.query(Student).filter(
+        excluded = committed(db.query(Student)).filter(
             Student.programme_id == p.id,
             Student.is_latest.is_(True),
             ~Student.enrollment_status.in_(INTAKE_COUNTED_STATUSES),
@@ -236,7 +243,7 @@ def get_intake_reconciliation(db: Session, institution_id: str | None = None) ->
         open_cases = db.query(VerificationCase).filter(
             VerificationCase.institution_id == p.institution_id,
             VerificationCase.issue_type == "intake_mismatch",
-            VerificationCase.status.in_(["open", "under_review", "pending"]),
+            VerificationCase.status.in_(["open", "under_review", "pending", "escalated"]),
         ).count()
 
         rows.append({

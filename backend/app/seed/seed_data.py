@@ -5,6 +5,8 @@ names are invented place names; codes use an RX- prefix so they can never be
 mistaken for real AICTE permanent IDs.
 """
 
+import csv
+import os
 import random
 from datetime import date, datetime, timedelta
 from sqlalchemy.orm import Session
@@ -19,6 +21,7 @@ from app.models.verification import VerificationCase, CaseEvent
 from app.models.audit import AuditLog
 from app.models.integration import IntegrationConfig
 from app.models.intake import IntakeReference
+from app.models.reference import ReferenceRecord
 from app.services.auth_service import hash_password
 
 MALE_NAMES = ['Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ayaan', 'Krishna', 'Ishaan', 'Shaurya', 'Atharva', 'Dhruv', 'Kabir', 'Rohan', 'Rahul', 'Rohit', 'Karan', 'Vikram', 'Suresh', 'Naveen', 'Farhan', 'Imran', 'Joseph', 'Anil', 'Gurpreet', 'Tenzin', 'Karthik', 'Varun']
@@ -80,13 +83,16 @@ BTECH = [
 
 # Extra programmes for some colleges: (code, name, degree, years, intake)
 EXTRA_PROGRAMMES = {
-    0: [("CSBS", "Computer Science & Business Systems", "B.Tech", 4, 60), ("MCA", "Master of Computer Applications", "MCA", 2, 60)],
+    0: [("CSBS", "Computer Science & Business Systems", "B.Tech", 4, 60), ("MCA", "Master of Computer Applications", "MCA", 2, 60),
+        ("IT", "Information Technology", "B.Tech", 4, 60), ("AIDS", "Artificial Intelligence & Data Science", "B.Tech", 4, 60),
+        ("MTCS", "M.Tech Computer Science & Engineering", "M.Tech", 2, 18)],
+    1: [("MCA", "Master of Computer Applications", "MCA", 2, 60)],
     2: [("MBA", "Master of Business Administration", "MBA", 2, 120)],
     5: [("MBA", "Master of Business Administration", "MBA", 2, 60), ("MCA", "Master of Computer Applications", "MCA", 2, 60)],
 }
 
 # Programmes left empty so the sample upload files have somewhere to go
-LEFT_FOR_UPLOAD = {(0, "CSBS"), (0, "MCA")}
+LEFT_FOR_UPLOAD = {(0, "CSBS"), (0, "MCA"), (0, "IT"), (0, "AIDS"), (0, "MTCS"), (1, "MCA")}
 # One programme deliberately above its reference so intake reconciliation has a case to show
 OVER_INTAKE = {(2, "ECE"): 134}
 # CSE at the main college keeps its hand-crafted edge cases (seeded separately)
@@ -106,6 +112,24 @@ def _unique_apaar(rng: random.Random, used: set[str]) -> str:
         if value not in used and value not in SHARED_APAARS:
             used.add(value)
             return value
+
+
+REFERENCE_CSV = os.path.join(os.path.dirname(__file__), "reference_records.csv")
+
+
+def _seed_reference_records(db: Session) -> None:
+    """Sandbox reference records for reconciliation demos (fictional; not an official registry)."""
+    if not os.path.exists(REFERENCE_CSV):
+        return
+    with open(REFERENCE_CSV, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            db.add(ReferenceRecord(
+                apaar_id=row["apaar_id"].strip(),
+                name=row["name"].strip(),
+                date_of_birth=date.fromisoformat(row["date_of_birth"]) if row.get("date_of_birth") else None,
+                gender=row.get("gender") or None,
+                source=row.get("source") or "Sandbox reference dataset",
+            ))
 
 
 def seed_database(db: Session):
@@ -199,8 +223,19 @@ def seed_database(db: Session):
         role="reviewer",
         status="active",
     )
-    db.add_all([admin_user, staff_user, officer_user])
+    # Staff account at a second college, used to show institution-level isolation
+    staff_user_2 = User(
+        institution_id=institutions[1].id,
+        email="staff.tce@college.edu.in",
+        password_hash=hash_password("staff123"),
+        name="Arun Subramanian",
+        role="institution_user",
+        status="active",
+    )
+    db.add_all([admin_user, staff_user, officer_user, staff_user_2])
     db.flush()
+
+    _seed_reference_records(db)
 
     print("[SEED] Seeding students for every department...")
     all_flagged: list[tuple[Student, Submission, Institution]] = []

@@ -42,3 +42,9 @@ jobs:
         run: |
           cd backend
           python -c "import app.main; print('App imported successfully')"
+
+      - name: Run backend tests (isolated temporary database)
+        run: |
+          cd backend
+          pip install pytest
+          python -m pytest tests -q -W ignore::DeprecationWarning

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ImportStepper } from '../components/ui/ImportStepper';
 import { useNavigate } from 'react-router-dom';
 import { submissionsApi } from '../api/client';
+import { useToast } from '../contexts/ToastContext';
 import {
   UploadCloud,
   FileSpreadsheet,
@@ -15,32 +16,65 @@ import {
 
 const SAMPLE_FILES = [
   {
-    file: 'CSBS_2025-26_admissions',
-    title: 'CSBS first-year admissions',
+    file: 'students_valid',
+    title: 'Information Technology admissions',
     description: 'A clean batch: every row should pass all checks.',
-    programme: 'Computer Science & Business Systems (CSBS)',
-    rows: 57,
+    programme: 'Information Technology (IT)',
+    rows: 60,
     formats: ['csv'],
   },
   {
-    file: 'MCA_2025-26_admissions',
-    title: 'MCA first-year admissions',
-    description: 'Includes typical data problems: missing and malformed APAAR IDs, a repeated ID, a student already enrolled at another college, an impossible date of birth and formatting errors.',
+    file: 'students_missing_apaar',
+    title: 'MCA admissions with missing APAAR IDs',
+    description: 'Five students have no APAAR ID yet, including Vihaan Sharma (IIT25MCA004).',
     programme: 'Master of Computer Applications (MCA)',
-    rows: 60,
+    rows: 40,
+    formats: ['csv'],
+  },
+  {
+    file: 'students_invalid',
+    title: 'AI & Data Science admissions with data errors',
+    description: 'Missing fields, malformed APAAR IDs, impossible dates, and gender and email format errors.',
+    programme: 'Artificial Intelligence & Data Science (AIDS)',
+    rows: 30,
     formats: ['csv', 'xlsx'],
   },
   {
-    file: 'MECH_2025-26_late_admissions',
+    file: 'students_duplicates',
+    title: 'CSBS admissions with duplicates',
+    description: 'A repeated row, a reused roll number, the same person twice, and APAAR IDs already in use here or at another college.',
+    programme: 'Computer Science & Business Systems (CSBS)',
+    rows: 34,
+    formats: ['csv'],
+  },
+  {
+    file: 'students_reconciliation',
+    title: 'M.Tech admissions to reconcile',
+    description: 'Four students whose details differ from the sandbox reference records.',
+    programme: 'M.Tech Computer Science & Engineering (MTCS)',
+    rows: 16,
+    formats: ['csv'],
+  },
+  {
+    file: 'students_intake_overflow',
     title: 'Mechanical late admissions',
-    description: 'Late admissions that take Mechanical Engineering above its intake reference.',
+    description: 'Late admissions that take Mechanical Engineering 3 above its intake reference.',
     programme: 'Mechanical Engineering (MECH)',
-    rows: 12,
+    rows: 18,
+    formats: ['csv'],
+  },
+  {
+    file: 'students_other_institution',
+    title: 'Tamravarni College MCA admissions',
+    description: 'For the second college: sign in as its staff account to upload. Not visible to other colleges.',
+    programme: 'Master of Computer Applications (MCA)',
+    rows: 50,
     formats: ['csv'],
   },
 ];
 
 export const StudentDataUploadPage: React.FC = () => {
+  const { notify } = useToast();
   const [file, setFile] = useState<File | null>(null);
   const [academicYear, setAcademicYear] = useState('2025-26');
   const [uploading, setUploading] = useState(false);
@@ -88,6 +122,9 @@ export const StudentDataUploadPage: React.FC = () => {
 
     try {
       const res = await submissionsApi.upload(formData);
+      if (res.duplicate_of) {
+        notify(`This exact file (${res.duplicate_of.file_name}) was already submitted. Rows already on record will be skipped, not added again.`, 'info');
+      }
       navigate(`/mapping?submission_id=${res.submission_id}`);
     } catch (err: any) {
       setError(err.message || 'File upload failed. Ensure CSV or XLSX format.');

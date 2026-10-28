@@ -1,0 +1,19 @@
+student_name,apaar_id,dob,gender,programme,admission_date,status,category,roll_no,email,phone
+Kavya Naidu,110600000001,23/07/2007,Female,MECH,08/08/2025,active,General,IIT25MECHL001,kavya.naidu.iit25mechl001@student.ilampirai.example,0272112357
+Kavya Joshi,110600000002,28/11/2006,Female,MECH,08/08/2025,active,OBC,IIT25MECHL002,kavya.joshi.iit25mechl002@student.ilampirai.example,0294078197
+Nisha Patel,110600000003,26/06/2007,Female,MECH,15/08/2025,active,General,IIT25MECHL003,nisha.patel.iit25mechl003@student.ilampirai.example,0636092429
+Fathima Reddy,110600000004,22/01/2007,Female,MECH,14/08/2025,active,General,IIT25MECHL004,fathima.reddy.iit25mechl004@student.ilampirai.example,0525240490
+Riya Menon,110600000005,13/08/2006,Female,MECH,02/08/2025,active,ST,IIT25MECHL005,riya.menon.iit25mechl005@student.ilampirai.example,0909169399
+Varun Singh,110600000006,12/10/2007,Male,MECH,19/08/2025,active,OBC,IIT25MECHL006,varun.singh.iit25mechl006@student.ilampirai.example,0508230438
+Kavya Menon,110600000007,27/12/2007,Female,MECH,06/08/2025,active,OBC,IIT25MECHL007,kavya.menon.iit25mechl007@student.ilampirai.example,0487942879
+Harini Iyer,110600000008,14/08/2006,Female,MECH,19/08/2025,active,OBC,IIT25MECHL008,harini.iyer.iit25mechl008@student.ilampirai.example,0485608262
+Sai Kumar,110600000009,20/05/2006,Male,MECH,19/08/2025,active,SC,IIT25MECHL009,sai.kumar.iit25mechl009@student.ilampirai.example,0322241654
+Kabir Naidu,110600000010,25/11/2006,Male,MECH,17/08/2025,active,General,IIT25MECHL010,kabir.naidu.iit25mechl010@student.ilampirai.example,0295508475
+Saanvi Varghese,110600000011,23/11/2007,Female,MECH,02/08/2025,active,OBC,IIT25MECHL011,saanvi.varghese.iit25mechl011@student.ilampirai.example,0776826313
+Fathima Fernandes,110600000012,13/01/2006,Female,MECH,13/08/2025,active,EWS,IIT25MECHL012,fathima.fernandes.iit25mechl012@student.ilampirai.example,0904916383
+Karthik Krishnan,110600000013,09/10/2006,Male,MECH,16/08/2025,active,OBC,IIT25MECHL013,karthik.krishnan.iit25mechl013@student.ilampirai.example,0589431746
+Manoj Singh,110600000014,19/08/2007,Male,MECH,15/08/2025,active,OBC,IIT25MECHL014,manoj.singh.iit25mechl014@student.ilampirai.example,0277920837
+Naveen Kumar,110600000015,17/11/2006,Male,MECH,15/08/2025,active,OBC,IIT25MECHL015,naveen.kumar.iit25mechl015@student.ilampirai.example,0431518012
+Aarav Krishnan,110600000016,20/09/2007,Male,MECH,06/08/2025,active,General,IIT25MECHL016,aarav.krishnan.iit25mechl016@student.ilampirai.example,0227147837
+Diya Khan,110600000017,04/07/2006,Female,MECH,13/08/2025,active,OBC,IIT25MECHL017,diya.khan.iit25mechl017@student.ilampirai.example,0350930205
+Farhan Varghese,110600000018,17/06/2007,Male,MECH,05/08/2025,active,ST,IIT25MECHL018,farhan.varghese.iit25mechl018@student.ilampirai.example,0894392677

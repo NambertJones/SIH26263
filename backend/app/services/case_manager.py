@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from app.services.privacy import mask_apaar
+from app.models.validation import ValidationIssue
 from app.models.verification import VerificationCase, CaseEvent
 from app.models.student import Student
 from app.models.user import User
@@ -149,61 +150,147 @@ def request_clarification(db: Session, case_id: str, actor_id: str, note: str) -
     return case
 
 
+import re as _re
+
+# A reason that says evidence is still outstanding is not a resolution
+_OUTSTANDING = _re.compile(
+    r"(still|yet to be|not yet|awaiting|pending|waiting for|to be (submitted|provided|received))[^.]{0,40}"
+    r"(evidence|document|proof|card|certificate|confirmation)"
+    r"|(evidence|document|proof|card|certificate|copy|copies)s?[^.]{0,30}(still )?"
+    r"(required|needed|awaited|pending|outstanding|missing|not (yet )?(received|submitted|provided))",
+    _re.IGNORECASE,
+)
+
+CASE_RULE_CODES = {
+    "duplicate_enrollment": {"DUP_APAAR_SAME", "DUP_APAAR_CROSS", "DUP_ROLL", "POSSIBLE_DUP_PERSON"},
+    "reference_mismatch": {"REF_MISMATCH"},
+    "intake_mismatch": {"INTAKE_EXCEED"},
+}
+
+
+class CaseDecisionError(ValueError):
+    """The decision is inconsistent with the record or the evidence; shown to the user as 409."""
+
+
+def _current_student(db: Session, case: VerificationCase):
+    from app.services.validation_engine import latest_version
+    if not case.student_id:
+        return None
+    s = db.query(Student).filter(Student.id == case.student_id).first()
+    return latest_version(db, s) if s else None
+
+
+def _ensure_not_awaiting_evidence(case: VerificationCase) -> None:
+    """A case marked 'Awaiting evidence' is decided only after the evidence is added to it."""
+    if case.status == "pending":
+        raise CaseDecisionError(
+            "This case is awaiting evidence. Add the evidence to the case first (tick 'Add as evidence' when "
+            "posting the note), then decide it."
+        )
+
+
 def resolve_case(db: Session, case_id: str, actor_id: str, resolution_reason: str) -> VerificationCase:
-    """Resolve a case with mandatory justification."""
+    """Resolve only when the record now passes the checks behind the case and the reason is a real outcome."""
+    from app.services.validation_engine import revalidate_student
+
     case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
     if not case:
         raise ValueError(f"Case {case_id} not found")
+    if case.status in ("resolved", "rejected"):
+        raise CaseDecisionError("This case is already closed.")
+    _ensure_not_awaiting_evidence(case)
+    if _OUTSTANDING.search(resolution_reason or ""):
+        raise CaseDecisionError(
+            "Your reason says evidence is still outstanding. Use 'Mark awaiting evidence' instead, "
+            "and resolve the case once the evidence has been checked."
+        )
+
+    student = _current_student(db, case)
+    if student:
+        accepted = CASE_RULE_CODES.get(case.issue_type, set()) & {"POSSIBLE_DUP_PERSON", "REF_MISMATCH"}
+        _, issues = revalidate_student(db, student)
+        blocking = [i for i in issues if i["severity"] == "error"]
+        if blocking:
+            db.commit()  # keep the refreshed check results visible
+            raise CaseDecisionError(
+                "The record still fails these checks: "
+                + "; ".join(i["description"] for i in blocking[:3])
+                + " Correct the record with Submit Correction, mark the case Awaiting evidence, "
+                "or Dismiss it if the flag itself is wrong."
+            )
+        # Warnings this case was about are accepted by the reviewer's decision
+        for issue in db.query(ValidationIssue).filter(ValidationIssue.student_id == student.id,
+                                                      ValidationIssue.status == "open",
+                                                      ValidationIssue.rule_code.in_(accepted or {"__none__"})).all():
+            issue.status = "accepted"
+        db.flush()
+        revalidate_student(db, student)
+        case.student_id = student.id
 
     case.status = "resolved"
     case.resolved_by = actor_id
     case.resolution_reason = resolution_reason
     case.resolved_at = datetime.utcnow()
     case.updated_at = datetime.utcnow()
-
-    event = CaseEvent(
-        case_id=case.id,
-        actor_id=actor_id,
-        event_type="resolved",
-        description=f"Resolved with reason: {resolution_reason}",
-    )
-    db.add(event)
-
-    # If associated student is invalid/duplicate, update to valid if resolved
-    if case.student_id:
-        student = db.query(Student).filter(Student.id == case.student_id).first()
-        if student:
-            student.validation_status = "valid"
-            student.remarks = f"Resolved via verification case: {resolution_reason}"
-            student.updated_at = datetime.utcnow()
-
+    db.add(CaseEvent(case_id=case.id, actor_id=actor_id, event_type="resolved",
+                     description=f"Resolved with reason: {resolution_reason}"))
     db.commit()
     db.refresh(case)
     return case
 
 
 def reject_case(db: Session, case_id: str, actor_id: str, rejection_reason: str) -> VerificationCase:
-    """Reject a case with reason."""
+    """Dismiss a flag that was raised wrongly. Definite data errors must be corrected, not dismissed."""
+    from app.services.validation_engine import revalidate_student
+
     case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
     if not case:
         raise ValueError(f"Case {case_id} not found")
+    if case.status in ("resolved", "rejected"):
+        raise CaseDecisionError("This case is already closed.")
+    _ensure_not_awaiting_evidence(case)
+    codes = CASE_RULE_CODES.get(case.issue_type)
+    if not codes:
+        raise CaseDecisionError(
+            "This flag reports a definite data error (a missing or invalid field). It cannot be dismissed: "
+            "correct the record with Submit Correction, then resolve the case."
+        )
+
+    student = _current_student(db, case)
+    if student:
+        for issue in db.query(ValidationIssue).filter(ValidationIssue.student_id == student.id,
+                                                      ValidationIssue.status == "open",
+                                                      ValidationIssue.rule_code.in_(codes)).all():
+            issue.status = "dismissed"
+        db.flush()
+        revalidate_student(db, student)
+        case.student_id = student.id
 
     case.status = "rejected"
     case.resolved_by = actor_id
     case.resolution_reason = rejection_reason
     case.resolved_at = datetime.utcnow()
     case.updated_at = datetime.utcnow()
-
-    event = CaseEvent(
-        case_id=case.id,
-        actor_id=actor_id,
-        event_type="rejected",
-        description=f"Rejected: {rejection_reason}",
-    )
-    db.add(event)
+    db.add(CaseEvent(case_id=case.id, actor_id=actor_id, event_type="rejected",
+                     description=f"Dismissed: {rejection_reason}"))
     db.commit()
     db.refresh(case)
     return case
+
+
+def add_evidence(db: Session, case_id: str, actor_id: str, note: str) -> CaseEvent:
+    """Record evidence on a case; a case waiting for evidence goes back to review."""
+    case = db.query(VerificationCase).filter(VerificationCase.id == case_id).first()
+    if not case:
+        raise ValueError(f"Case {case_id} not found")
+    event = CaseEvent(case_id=case.id, actor_id=actor_id, event_type="evidence_added", description=f"Evidence: {note}")
+    db.add(event)
+    if case.status == "pending":
+        case.status = "under_review"
+    case.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(event)
+    return event
 
 
 def escalate_case(db: Session, case_id: str, actor_id: str, reason: str) -> VerificationCase:

@@ -6,7 +6,8 @@ import { ApaarStatusBadge } from '../components/ui/MaskedApaar';
 import { Pagination } from '../components/ui/Pagination';
 import { EmptyState, ErrorBanner, SkeletonRows } from '../components/ui/States';
 import { useAuth } from '../contexts/AuthContext';
-import { Users, Search, FileSpreadsheet } from 'lucide-react';
+import { Users, Search, FileSpreadsheet, UserPlus } from 'lucide-react';
+import { AddStudentModal } from '../components/AddStudentModal';
 
 const PAGE_SIZE = 25;
 
@@ -31,6 +32,7 @@ export const StudentRecordsListPage: React.FC = () => {
   const [data, setData] = useState<{ total: number; items: any[] }>({ total: 0, items: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
   const update = (next: Record<string, string | null>) => {
     const p = new URLSearchParams(params);
@@ -86,6 +88,14 @@ export const StudentRecordsListPage: React.FC = () => {
         </div>
 
         {user?.role !== 'reviewer' && user?.institution_id && (
+          <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAddOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-bold rounded-lg text-xs shadow-sm transition"
+          >
+            <UserPlus className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Add Student</span>
+          </button>
           <button
             onClick={() => navigate('/upload')}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm transition"
@@ -93,6 +103,18 @@ export const StudentRecordsListPage: React.FC = () => {
             <FileSpreadsheet className="w-3.5 h-3.5" aria-hidden="true" />
             <span>Upload New Batch</span>
           </button>
+          </div>
+        )}
+        {user?.institution_id && (
+          <AddStudentModal
+            isOpen={addOpen}
+            institutionId={user.institution_id}
+            onClose={() => setAddOpen(false)}
+            onCreated={(id) => {
+              setAddOpen(false);
+              navigate(`/students/${id}`);
+            }}
+          />
         )}
       </div>
 

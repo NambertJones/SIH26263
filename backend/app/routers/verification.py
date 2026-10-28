@@ -32,6 +32,8 @@ from app.services.case_manager import (
     reject_case,
     escalate_case,
     request_review,
+    add_evidence,
+    CaseDecisionError,
 )
 from app.services.audit_service import log_event
 
@@ -108,6 +110,7 @@ def get_case(
         "institution_id": case.institution_id,
         "institution_name": case.institution.name if case.institution else None,
         "issue_type": case.issue_type,
+        "rule_code": case.rule_code,
         "title": case.title,
         "description": case.description,
         "status": case.status,
@@ -131,18 +134,26 @@ def _matched_records(db: Session, case: VerificationCase, current_user: User) ->
     Institution users only learn that a record exists elsewhere; the other
     institution's name and the student's details are shown to oversight users only.
     """
-    student = case.student
-    if case.issue_type != "duplicate_enrollment" or not student or not student.apaar_id:
+    from app.services.validation_engine import committed, latest_version, norm_name, version_chain_ids
+    student = latest_version(db, case.student) if case.student else None
+    if case.issue_type != "duplicate_enrollment" or not student:
         return []
-    others = (
-        db.query(Student)
-        .filter(
-            Student.apaar_id == student.apaar_id,
-            Student.is_latest.is_(True),
-            Student.id != student.id,
-        )
-        .all()
-    )
+    chain = version_chain_ids(db, student)
+    candidates = committed(db.query(Student)).filter(Student.is_latest.is_(True), ~Student.id.in_(chain)).all()
+    others = []
+    for o in candidates:
+        reasons = []
+        if student.apaar_id and o.apaar_id and o.apaar_id.strip() == student.apaar_id.strip():
+            reasons.append("same APAAR ID")
+        if (o.institution_id == student.institution_id and student.institute_roll_no and o.institute_roll_no
+                and o.institute_roll_no.strip().upper() == student.institute_roll_no.strip().upper()):
+            reasons.append("same roll number")
+        if (student.date_of_birth and o.date_of_birth == student.date_of_birth
+                and norm_name(o.name) == norm_name(student.name) and o.institution_id == student.institution_id):
+            reasons.append("same name and date of birth")
+        if reasons:
+            o._match_reasons = reasons
+            others.append(o)
     central = is_central_user(current_user)
     out = []
     for o in others:
@@ -161,6 +172,9 @@ def _matched_records(db: Session, case: VerificationCase, current_user: User) ->
             "name_matches": o.name.strip().lower() == student.name.strip().lower(),
             "row_number": o.row_number if visible else None,
             "validation_status": o.validation_status if visible else None,
+            "roll_no": o.institute_roll_no if visible else None,
+            "match_reasons": o._match_reasons,
+            "apaar_matches": bool(student.apaar_id and o.apaar_id and o.apaar_id.strip() == student.apaar_id.strip()),
         })
     return out
 
@@ -210,7 +224,14 @@ def add_comment(
 
     get_effective_institution_id(current_user, case.institution_id)
 
-    event = add_case_comment(db, case_id, current_user.id, request.comment)
+    if not (request.comment or "").strip():
+        raise HTTPException(status_code=400, detail="Write a comment first.")
+    if request.evidence:
+        event = add_evidence(db, case_id, current_user.id, request.comment.strip())
+        log_event(db=db, action="evidence_added", actor_id=current_user.id, actor_email=current_user.email,
+                  entity_type="case", entity_id=case_id, description=f"Evidence added to case {case_id}: {request.comment.strip()}")
+    else:
+        event = add_case_comment(db, case_id, current_user.id, request.comment.strip())
     return {
         "id": event.id,
         "event_type": event.event_type,
@@ -231,8 +252,11 @@ def request_case_clarification(
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
-    require_institution_member(current_user, "change a case's status")
     get_effective_institution_id(current_user, case.institution_id)
+    if case.status in ("resolved", "rejected"):
+        raise HTTPException(status_code=409, detail="This case is closed. Ask for a re-review to reopen it.")
+    if not request.note or len(request.note.strip()) < 5:
+        raise HTTPException(status_code=400, detail="Say which evidence is needed (at least 5 characters).")
 
     updated = request_clarification(db, case_id, current_user.id, request.note)
     log_event(
@@ -270,7 +294,10 @@ def resolve(
     if case.status == "escalated" and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Escalated cases are decided by the institution admin.")
 
-    updated = resolve_case(db, case_id, current_user.id, request.reason)
+    try:
+        updated = resolve_case(db, case_id, current_user.id, request.reason.strip())
+    except CaseDecisionError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     log_event(
         db=db,
         action="case_resolved",
@@ -306,7 +333,10 @@ def reject(
     if case.status == "escalated" and current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Escalated cases are decided by the institution admin.")
 
-    updated = reject_case(db, case_id, current_user.id, request.reason)
+    try:
+        updated = reject_case(db, case_id, current_user.id, request.reason.strip())
+    except CaseDecisionError as e:
+        raise HTTPException(status_code=409, detail=str(e))
     log_event(
         db=db,
         action="case_rejected",

@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.user import User
 from app.models.institution import Institution
 from app.models.student import Student
+from app.services.validation_engine import committed
 from app.middleware.auth import get_current_user
 from app.middleware.tenant import get_effective_institution_id, is_central_user
 from app.services.report_generator import (
@@ -84,18 +85,18 @@ def institution_wise_report(
     results = []
 
     for inst in institutions:
-        total_students = db.query(Student).filter(
+        total_students = committed(db.query(Student)).filter(
             Student.institution_id == inst.id,
             Student.is_latest.is_(True),
         ).count()
 
-        valid_students = db.query(Student).filter(
+        valid_students = committed(db.query(Student)).filter(
             Student.institution_id == inst.id,
             Student.is_latest.is_(True),
             Student.validation_status == "valid",
         ).count()
 
-        issues_count = db.query(Student).filter(
+        issues_count = committed(db.query(Student)).filter(
             Student.institution_id == inst.id,
             Student.is_latest.is_(True),
             Student.validation_status.in_(["invalid", "duplicate"]),
@@ -127,7 +128,7 @@ def export_report(
 ):
     """Export discrepancy report in CSV format."""
     eff_id = get_effective_institution_id(current_user, institution_id)
-    data = get_discrepancy_report(db, eff_id)
+    data = get_discrepancy_report(db, eff_id, limit=None)
 
     log_event(
         db=db,
@@ -138,14 +139,22 @@ def export_report(
         description=f"Exported {report_type} report with {len(data)} rows.",
     )
 
-    lines = ["Issue ID,Rule Code,Severity,Student Name,APAAR ID,Description,Row Number,Status"]
-    for row in data:
-        desc = (row["description"] or "").replace('"', '""')
-        lines.append(
-            f'"{row["issue_id"]}","{row["rule_code"]}","{row["severity"]}","{row["student_name"]}","{row["student_apaar_id"]}","{desc}","{row["row_number"] or ""}","{row["status"]}"'
-        )
+    import csv
+    import io
 
-    csv_data = "\n".join(lines)
+    def safe(value) -> str:
+        """Neutralise spreadsheet formulas (CSV injection) in exported text."""
+        text = "" if value is None else str(value)
+        return "'" + text if text[:1] in ("=", "+", "-", "@", "\t", "\r") else text
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["Issue ID", "Rule Code", "Severity", "Student Name", "Roll No", "APAAR ID (masked)", "Description", "Row Number", "Status"])
+    for row in data:
+        writer.writerow([safe(row["issue_id"]), safe(row["rule_code"]), safe(row["severity"]), safe(row["student_name"]),
+                         safe(row.get("roll_no")), safe(row["student_apaar_id"]), safe(row["description"]),
+                         safe(row["row_number"] or ""), safe(row["status"])])
+    csv_data = "\ufeff" + buf.getvalue()  # BOM so Excel opens UTF-8 correctly
     return Response(
         content=csv_data,
         media_type="text/csv",

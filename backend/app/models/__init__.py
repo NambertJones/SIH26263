@@ -10,6 +10,7 @@ from app.models.integration import IntegrationConfig
 from app.models.audit import AuditLog
 from app.models.intake import IntakeReference
 from app.models.rules import ValidationRuleConfig
+from app.models.reference import ReferenceRecord
 
 __all__ = [
     "User",
@@ -25,4 +26,5 @@ __all__ = [
     "AuditLog",
     "IntakeReference",
     "ValidationRuleConfig",
+    "ReferenceRecord",
 ]
