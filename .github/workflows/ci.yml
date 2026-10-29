@@ -46,5 +46,5 @@ jobs:
       - name: Run backend tests (isolated temporary database)
         run: |
           cd backend
-          pip install pytest
+          pip install -r requirements-dev.txt
           python -m pytest tests -q -W ignore::DeprecationWarning

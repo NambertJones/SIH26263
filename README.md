@@ -1,174 +1,384 @@
-# APAAR ReconX — Student Data Validation & Reconciliation Prototype (SIH26263)
+# APAAR ReconX — Student Data Validation & Reconciliation (SIH26263)
 
-> **Smart India Hackathon 2026** · Problem Statement ID: **SIH26263**  
-> **Full-Stack Working Prototype** · Python FastAPI + PostgreSQL/SQLite + React + TypeScript + Vite + Tailwind CSS
+> **Smart India Hackathon 2026 · Problem Statement SIH26263 · Team We Aren't Robots**
+> FastAPI · SQLAlchemy (SQLite / PostgreSQL) · React · TypeScript · Vite · Tailwind CSS
 
----
+> **Independent SIH prototype.** Not an official AICTE, Ministry of Education, APAAR, DigiLocker or AISHE system,
+> and not affiliated with or endorsed by them. All colleges, students and identifiers are fictional.
+> APAAR IDs are **format-checked only**; registry connectors are sandbox simulations.
 
-## 🌟 Executive Summary
-
-> **Independent working prototype. Not an official AICTE or APAAR portal. Uses synthetic data; external registry checks are simulated.** It is not affiliated with, endorsed by or developed for AICTE, the Ministry of Education, APAAR, DigiLocker or AISHE.
-
-**APAAR ReconX** is a hackathon prototype for the SIH26263 problem statement (student data management and verification for AICTE-approved institutions, keyed on the APAAR ID). Its features:
-1. **Automated Data Checks**: APAAR ID format check (12 digits — format only, not identity verification), duplicate checks within a file, and flags for possible duplicate enrolments across institutions for human review.
-2. **Intake Reconciliation**: Compares enrolled counts with an intake reference per programme and flags potential discrepancies for review (it does not enforce quotas).
-3. **Audited Correction Workflow**: Immutable versioning preserves every historical change with mandatory justification rationale.
-4. **Review Queue**: Case management for oversight reviewers with chronological event timelines.
-5. **Simulated Registry Connectors**: Local mock adapters standing in for APAAR, DigiLocker / NAD, AICTE approval and AISHE lookups. No government system is connected.
-6. **Reports & Prototype Records**: Exportable discrepancy lists, a data-quality summary (counts only, no compliance score), and QR-coded prototype enrolment records marked "not an official document".
+**Live demo:** <https://apaar-reconx.onrender.com>. It is on Render's free plan: the first visit after a quiet
+period takes about a minute to wake up, and **each wake-up resets the data** (see [Reset](#10-reset-the-demo-data)).
 
 ---
 
-## 🧭 The 12 Prototype Screens
+## Contents
+1. [What it does](#1-what-it-does)
+2. [Sign-in accounts](#2-sign-in-accounts)
+3. [Run it on your computer](#3-run-it-on-your-computer)
+4. [How to use it: step by step](#4-how-to-use-it-step-by-step)
+5. [Sample files](#5-sample-files)
+6. [Who can do what](#6-who-can-do-what)
+7. [Checks the system runs](#7-checks-the-system-runs)
+8. [Case statuses](#8-case-statuses)
+9. [Tests](#9-tests)
+10. [Reset the demo data](#10-reset-the-demo-data)
+11. [Deployment](#11-deployment)
+12. [Project structure](#12-project-structure)
+13. [Limitations](#13-limitations)
+14. [More documentation](#14-more-documentation)
 
-| Screen # | Screen Name | Route | Core Functionality |
+---
+
+## 1. What it does
+
+Colleges upload admission data (CSV or Excel) keyed on each student's APAAR ID. APAAR ReconX:
+
+* **Checks every row before anything is saved:**
+  * missing fields;
+  * malformed APAAR IDs;
+  * impossible dates;
+  * gender and email format;
+  * the college's own configurable rules.
+* **Finds possible duplicates:**
+  * the same APAAR ID twice in a college;
+  * an APAAR ID already active at **another** college;
+  * the same roll number used for two students;
+  * the same name and date of birth;
+  * exact repeated rows.
+* **Compares enrolment with each programme's intake reference** (approved + supernumerary/NRI seats).
+* **Reconciles records with reference data** (a sandbox reference dataset in this prototype).
+* **Opens a review case for every problem.** A person decides each case with a written reason. Nothing is
+  merged or deleted automatically.
+* **Keeps every change:**
+  * corrections create a new version of the record, and the old one is kept;
+  * every action is in the audit trail.
+* **Keeps each college's data separate.** Oversight reviewers see all colleges but cannot change data.
+
+Re-uploading a file is safe: rows already on record are skipped, and imports never overwrite existing records.
+
+---
+
+## 2. Sign-in accounts
+
+The login page has one-click buttons for the first three accounts.
+
+| Role | Email | Password | College |
 |---|---|---|---|
-| **Screen 1** | **Login Portal** | `/login` | Prototype login with disclaimer and 1-click role switcher for the synthetic accounts (Admin, Staff, Oversight Reviewer) |
-| **Screen 2** | **Institution Dashboard** | `/dashboard` | 4 metric stat cards, Enrollment vs Intake capacity bars, status donut chart, recent audit feed |
-| **Screen 3** | **Student Data Upload** | `/upload` | 4-step wizard, drag-and-drop CSV/XLSX upload, schema checklist, downloadable test CSV template |
-| **Screen 4** | **Column Mapping** | `/mapping` | Auto-detected header matching, schema dropdown selectors, live 3-row sample preview |
-| **Screen 5** | **Validation Results** | `/validation` | Real-time deterministic rule engine results, severity tabs, APAAR format & duplicate counters, batch finalization |
-| **Screen 6** | **Student Record Details** | `/students/:id` | Student profile, cross-institution duplicate alert banner, issue breakdown, audit version history, correction modal |
-| **Screen 7** | **Verification Cases** | `/cases` | Adjudication queue, priority badges (Critical, High, Medium), timeline comments, assign, resolve & reject |
-| **Screen 8** | **Reports & Analytics** | `/reports` | Intake reference vs enrolled table, discrepancy list, data-quality summary (counts only), CSV export |
-| **Screen 9** | **External Integrations** | `/integrations` | APAAR, DigiLocker, AICTE, AISHE mock adapter cards with a simulated test modal (results labelled SIMULATED) |
-| **Screen 10** | **User Management** | `/users` | Role-based access control (RBAC), multi-tab user directory, new account creation modal |
-| **Screen 11** | **Institution Settings** | `/settings` | Institution profile, programme intake reference (synthetic), admission calendar dates, security notes |
-| **Screen 12** | **Certificate Preview** | `/certificate` | Prototype enrolment record (marked not an official document), QR link to the prototype record check, PDF print layout |
+| Institution Admin | `admin@college.edu.in` | `admin123` | Ilampirai Institute of Technology |
+| College Staff | `staff@college.edu.in` | `staff123` | Ilampirai Institute of Technology |
+| College Staff (second college) | `staff.tce@college.edu.in` | `staff123` | Tamravarni College of Engineering |
+| Oversight Reviewer | `reviewer@reconx.in` | `reviewer123` | All colleges (read-only) |
+
+These are prototype accounts for demonstration only.
 
 ---
 
-## 👥 Synthetic Access Accounts
+## 3. Run it on your computer
 
-| Role | Email | Password | Access Scope |
-|---|---|---|---|
-| **Institution Admin** | `admin@college.edu.in` | `admin123` | Configures the platform: institution profile, programmes, users, validation rules; assigns cases; decides escalated cases; audit and oversight views |
-| **College Staff** | `staff@college.edu.in` | `staff123` | Main working role: uploads and validates files, investigates flagged records, resolves or dismisses cases with reasons, corrects records |
-| **Oversight Reviewer** | `reviewer@reconx.in` | `reviewer123` | Monitors all institutions: reviews decisions and audit history, escalates cases, requests re-review. Cannot edit records or decide cases |
+### Requirements
+* Python 3.10 or newer (tested with 3.12 and 3.14)
+* Node.js 18 or newer (tested with 20 and 24)
 
-*Note: You can also use the one-click quick-login buttons on the login screen or in the top navigation bar to switch roles instantly.*
+### Option A: one server (simplest)
 
----
-
-## 🚀 Quickstart Guide
-
-### Prerequisites
-- Python 3.10+ (Tested on Python 3.14)
-- Node.js 18+ (Tested on Node v24)
-
-### 1. Launch Backend API Server
 ```bash
-# Navigate to backend directory
-cd backend
-
-# Activate virtual environment
-# Windows:
-.venv\Scripts\activate
-
-# Or run directly with the virtualenv Python:
-.venv\Scripts\python.exe run.py
-```
-- Backend will start at: `http://localhost:8000`
-- Interactive OpenAPI / Swagger Docs: `http://localhost:8000/docs`
-- *Note: On startup, the backend automatically initializes the database and populates ~120 synthetic students, verification cases, and audit logs.*
-
-### 2. Launch Frontend Client
-```bash
-# Open a new terminal in frontend directory
+# 1. Build the web app
 cd frontend
-
-# Install dependencies (already installed)
 npm install
-
-# Start Vite dev server
-npm run dev
-```
-- Frontend application will open at: `http://localhost:5173`
-
----
-
-## 🎬 Demo, Test Data & Test Report
-
-* `demo-data/`: fictional upload files for every demo scenario (also downloadable from **Bulk Import**),
-  plus expected cases and accounts. See `demo-data/README_SYNTHETIC_DATA.md`.
-* `docs/SIH_DEMO_GUIDE.md`: step-by-step demonstration script, what to say, features and limitations.
-* `docs/TEST_REPORT.md`: results of the automated tests, the end-to-end dataset run and the browser walkthrough.
-* `docs/DEMO_RESET.md`: how to reset the live site and a local copy safely.
-* `backend/scripts/demo_e2e.py`: re-runs every scenario on a throwaway database (`69/69 checks passed`).
-
-## 🛡️ Architecture & Verification Rules
-
-```
-[ CSV / Excel Upload ]
-         ↓
-[ File Processor & Auto-Mapping ]
-         ↓
-[ Deterministic Validation Engine ]
-   ├── MISSING_REQUIRED   : Mandatory name, APAAR, DOB
-   ├── FMT_APAAR          : Exact 12-digit numeric validation
-   ├── FMT_DOB            : Future dates, implausible age (<15 error, 15 warning)
-   ├── DATE_INCONSIST     : Enrollment date before DOB / in the future
-   ├── FMT_GENDER/EMAIL   : Format warnings
-   ├── DUP_APAAR_SAME     : Intra-file duplicate APAAR detection
-   ├── DUP_APAAR_CROSS    : Possible cross-institution active enrollment (sent for oversight review)
-   └── INTAKE_EXCEED      : Cumulative check against approved + supernumerary/NRI seats,
-                            counting all finalized submissions for the programme
-         ↓
-[ Automated Verification Case Generation ]
-         ↓
-[ Reviewer Adjudication & Immutable Versioned Audit Trail ]
-```
-
----
-
-## 🔐 Access Control & Privacy
-
-| Role | Scope |
-|---|---|
-| Institution Admin (`admin` + institution) | Own institution: profile, programmes, users, validation rules, case assignment, escalated-case decisions, audit and oversight summary |
-| College Staff (`institution_user`) | Own institution: upload/map/validate/submit files, correct records, resolve/dismiss/mark-awaiting-evidence on cases, reveal a full APAAR ID with a reason |
-| Oversight Reviewer (`reviewer`) | All institutions, read-only on data: oversight dashboard, audit trail, comment, **escalate** open cases, **request re-review** of closed cases. Cannot decide cases, correct records, upload or reveal full IDs |
-| Platform Admin (`admin`, no institution) | Platform-wide administration |
-
-- APAAR IDs are masked (`XXXX-XXXX-9012`) everywhere. College staff and the institution admin can reveal a full ID on the record page after giving a reason; every reveal is audited.
-- Certificate QR codes carry only the certificate number. `GET /api/public/verify/{certificate_id}` (UI: `/verify/:id`) lets employers/regulators verify without logging in and returns only masked APAAR, name, institution, programme and status.
-- Dates in uploads are read day-first (`12/05/2004` = 12 May 2004).
-- Set `JWT_SECRET` (or `SECRET_KEY`) and `PUBLIC_BASE_URL` in production.
-
----
-
-## ☁️ Cloud Deployment & Production Hosting
-
-### Option 1: Render (1-Click Blueprint Deploy)
-The repository includes a ready-to-use [`render.yaml`](render.yaml) blueprint:
-1. Log in to [Render.com](https://render.com) using your GitHub account (`NambertJones`).
-2. Click **New +** > **Blueprint**.
-3. Select this repository (`NambertJones/SIH26263`).
-4. Render will automatically build the React frontend and deploy the FastAPI backend inside a unified container with HTTPS enabled.
-
-### Option 2: Docker Container (Local or VPS)
-To run the full-stack container locally or on any cloud virtual machine (AWS EC2, DigitalOcean, Linode):
-```bash
-# Build and run with Docker Compose
-docker compose up --build -d
-```
-The application will be live at `http://localhost:8000`.
-
-### Option 3: Unified FastAPI Static Production Build
-You can build the frontend and serve both UI and API from a single Node/Python host:
-```bash
-# 1. Build frontend
-cd frontend
 npm run build
 
-# 2. Start FastAPI production server
+# 2. Set up and start the backend (it serves the built web app too)
 cd ../backend
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+python -m venv .venv
+source .venv/Scripts/activate  # Windows (Git Bash). PowerShell: .venv\Scripts\Activate.ps1 · macOS/Linux: source .venv/bin/activate
+pip install -r requirements.txt
+python run.py
 ```
-FastAPI automatically serves `frontend/dist` for all web pages and mounts all `/api` endpoints seamlessly.
+
+Open <http://localhost:8000>. The API documentation is at <http://localhost:8000/docs>.
+
+### Option B: development mode (live reload)
+
+Terminal 1, the backend:
+```bash
+cd backend
+source .venv/Scripts/activate
+python run.py
+```
+Terminal 2, the frontend:
+```bash
+cd frontend
+npm run dev
+```
+Open <http://localhost:5173>. API calls are forwarded to port 8000.
+
+### Option C: Docker
+```bash
+docker compose up --build -d
+```
+Open <http://localhost:8000>.
+
+**On first start** the database (`backend/apaar_reconx.db`) is created and filled with the starting data:
+* 8 fictional colleges, each with its AICTE-style details;
+* 57 programmes with seat figures;
+* about 3,600 students;
+* sample review cases and audit entries;
+* the sandbox reference records.
+
+Some programmes at the main college (IT, MCA, AI & DS, CSBS, M.Tech CSE) are left empty so you can fill
+them with the sample files.
 
 ---
 
-## 📄 License & Attribution
-Developed for the **Smart India Hackathon 2026** (Problem Statement: SIH26263). All government registry adapters (APAAR, DigiLocker, AICTE, AISHE) are simulated interfaces; no government system is contacted.
+## 4. How to use it: step by step
 
+### 4.1 Upload a file (College Staff)
+1. Sign in as **College Staff** and open **Bulk Import** (under *Data intake*).
+2. Choose the **Admission Academic Year**.
+3. Drag a CSV/XLSX file onto the upload box, or click **browse**. You can download ready-made files from the
+   sample list on the same page, or a blank **CSV template**.
+4. Click **Proceed to Column Mapping**. Columns are matched automatically; adjust any that are wrong.
+   * **Programme for this file**: leave it on *"Take it from each row's Programme / Branch column"* when
+     the file has a programme column (all sample files do). Otherwise pick the programme.
+5. Click **Save Mapping & Run Validation**.
+6. Review the **Validation Results** page:
+   * the cards show *Total evaluated*, *Valid records*, *Critical errors*, *Warnings* and *Skipped*;
+   * use **Errors Only**, **Warnings** or **Duplicates** to filter the table, and **Inspect** to see a row's
+     problems.
+   * Nothing is saved yet. This is a preview. Use **Re-map Columns** if the mapping was wrong.
+7. Click **Confirm & Submit for Review**. The summary shows how many records were added, skipped and flagged,
+   and how many review cases were opened. The records now appear in **Student Records**, on **Overview** and,
+   if flagged, in **Cases**.
+
+### 4.2 Look at and correct a student (College Staff / Institution Admin)
+1. Open **Student Records** and search by name, roll number or the last 4 digits of the APAAR ID.
+2. Click a student to open the **Student Record**. The tabs are:
+   * **Profile Details**, with *Reconciliation with reference record* when a reference record exists;
+   * **Issues & Cases**;
+   * **Audit Version History**.
+3. To fix data, click **Submit Correction**. You can change the name, APAAR ID, roll number, programme, date of
+   birth or gender, and you must enter a reason. Click **Confirm & Save Version**.
+   * The record is checked again at once, and the message tells you whether it now passes.
+   * The previous version is kept in **Audit Version History**.
+4. **Add Student** (on Student Records) adds a single student by hand. It runs the same checks as an upload.
+5. **Reveal** next to a masked APAAR ID shows the full number after you give a reason. Every reveal is logged.
+
+### 4.3 Work a review case (College Staff decides)
+1. Open **Cases**. Filter by type (**Duplicates**, **Invalid Data**, **Intake Discrepancy**,
+   **Reference Mismatch**) or status, or search. Click **Review** on a case.
+2. Read the **Case history**, and any matching records with the reason they matched.
+3. Add a note in the comment box. Tick **Add as evidence** when the note records evidence you have checked.
+4. Decide the case with a reason:
+   * **Resolve**: the problem is fixed. This is only allowed when the record now passes its checks, so correct
+     the record first.
+   * **Dismiss — not an issue**: the flag was wrong, for example two genuinely different students. It is not
+     offered for definite data errors such as a missing APAAR ID; those must be corrected.
+5. A case marked **Awaiting evidence** cannot be decided until evidence is added (step 3).
+
+### 4.4 Review possible duplicates
+**Duplicate Review** lists every duplicate case. Select one to see:
+* why the pair was selected;
+* a field-by-field comparison with the other record.
+
+Details of a record at another college show as *Hidden* to college users. Use **Open case to record a decision**
+to decide it.
+
+### 4.5 Check intake
+**Intake Reconciliation** shows, for each programme:
+* the reference total;
+* the number enrolled;
+* the difference;
+* the outcome.
+
+*Potential discrepancy — review required* means enrolment is above the reference. It is a reason to review,
+not a finding.
+
+### 4.6 Reports and audit
+* **Reports & Exports**: enrolment summary, discrepancy list, data-quality summary and institution matrix.
+  **Export CSV** downloads a spreadsheet-safe file with masked IDs.
+* **Audit Trail** (Admin, Reviewer): who did what, when and why.
+* **Enrolment Record** (on a student page): a printable record with a QR code, verifiable at `/verify/<id>`
+  without signing in.
+
+### 4.7 Institution Admin tasks
+* **Cases** → open a case → **Assigned to** → pick a staff member → **Save**.
+* Decide cases that a reviewer has **escalated**.
+* **Users & Roles**: add accounts and see what each role can do.
+* **Validation Rules**: choose which extra fields are required and adjust the age and date rules.
+* **Institution & Programmes**: college profile and programme seat figures.
+* **Review Monitoring**: recent decisions, escalations and recurring data problems.
+
+### 4.8 Oversight Reviewer tasks
+* See every college's records, cases, reports and the audit trail.
+* On an open case:
+  * **Mark awaiting evidence**, with a note of what is needed;
+  * **Escalate**, to send it to the college's Institution Admin.
+* On a closed case: **Request re-review**, which reopens it with a reason.
+* The reviewer cannot upload, correct records or decide cases.
+
+---
+
+## 5. Sample files
+
+The sample files are in `demo-data/` and are also downloadable on **Bulk Import**. Sign in as College Staff
+(Ilampirai) unless noted.
+
+| File | Rows | Programme | What it shows |
+|---|---|---|---|
+| `students_valid.csv` | 60 | IT | Clean file: 60 added, 0 cases |
+| `students_missing_apaar.csv` | 40 | MCA | 5 missing APAAR IDs, including **Vihaan Sharma, IIT25MCA004**; correct him with test value `110200000004` |
+| `students_invalid.csv` / `.xlsx` | 30 | AI & DS | Rows 1–12 each have a data error or warning |
+| `students_duplicates.csv` | 34 | CSBS | Repeated row, reused roll number, same name + DOB, APAAR active at another college, one APAAR on two rows |
+| `students_reconciliation.csv` | 16 | M.Tech CSE | Rows 3, 6, 9, 12 differ from their reference record |
+| `students_intake_overflow.csv` | 18 | Mechanical | Last 3 rows go over the intake reference (on fresh data only) |
+| `students_other_institution.csv` | 50 | MCA (Tamravarni) | Sign in as `staff.tce@college.edu.in`; shows that colleges can't see each other's data |
+
+Expected results for every row are in `demo-data/demo_scenarios.csv` and `demo-data/review_cases.csv`.
+The full demonstration script is in [`docs/SIH_DEMO_GUIDE.md`](docs/SIH_DEMO_GUIDE.md).
+
+**Your own file** needs a header row with at least the student name, APAAR ID, date of birth and roll number.
+Programme, gender, admission date, status, category, email and phone are optional. Dates are read day-first:
+`12/05/2004` is 12 May 2004.
+
+---
+
+## 6. Who can do what
+
+All of these rules are enforced by the server, not just hidden in the screens.
+
+| Action | College Staff | Institution Admin | Oversight Reviewer |
+|---|:-:|:-:|:-:|
+| Upload, validate and submit files | ✓ | ✓ | — |
+| Correct records / add a student | ✓ | ✓ | — |
+| Reveal a full APAAR ID (with reason) | ✓ | ✓ | — |
+| Resolve or dismiss cases | ✓ | ✓ | — |
+| Decide escalated cases | — | ✓ | — |
+| Assign cases | — | ✓ | — |
+| Mark a case awaiting evidence | ✓ | ✓ | ✓ |
+| Escalate a case | — | ✓ | ✓ |
+| Request re-review of a closed case | — | — | ✓ |
+| Users & Roles, edit Validation Rules | — | ✓ | — |
+| Audit Trail, Review Monitoring | — | ✓ | ✓ |
+| See other colleges' data | — | — | ✓ |
+
+---
+
+## 7. Checks the system runs
+
+| Code | Severity | Meaning |
+|---|---|---|
+| `MISSING_REQUIRED` | Error | Name, APAAR ID, date of birth, programme or a field your rules require is empty |
+| `FMT_APAAR` | Error | APAAR ID is not exactly 12 digits (format only, not identity verification) |
+| `FMT_DOB` | Error / warning | Date of birth in the future or implausible for admission |
+| `DATE_INCONSIST` | Error | Admission date before birth or in the future |
+| `FMT_GENDER`, `FMT_EMAIL` | Warning | Unrecognised gender value or malformed email |
+| `DUP_APAAR_SAME` | Error | Same APAAR ID on two records in this college |
+| `DUP_APAAR_CROSS` | Error | APAAR ID already active at another college |
+| `DUP_ROLL` | Error | Same roll number for two different students |
+| `POSSIBLE_DUP_PERSON` | Warning | Same name and date of birth as another record |
+| `REF_MISMATCH` | Warning | Details differ from the reference record |
+| `INTAKE_EXCEED` | Error | Rows that take a programme over its intake reference |
+| `SKIP_DUP_ROW`, `SKIP_EXISTING` | Info | Exact repeat in the file, or already on record. Not imported again |
+
+A flag is a reason to review, not proof of a duplicate or of wrongdoing.
+
+---
+
+## 8. Case statuses
+
+**Open** → **Under review** → **Resolved** or **Dismissed**. Along the way:
+
+* **Awaiting evidence**: no decision is allowed until evidence is added.
+* **Escalated**: the Institution Admin decides.
+
+A reviewer can reopen a closed case with **Request re-review**.
+
+---
+
+## 9. Tests
+
+From `backend/`:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest tests -q              # 34 automated tests on a temporary database
+python scripts/demo_e2e.py             # every demo scenario end to end; expect "69/69 checks passed"
+```
+
+Both use their own throwaway database and never touch `apaar_reconx.db`. GitHub Actions runs the frontend
+build and the tests on every push to `main`. Results are in [`docs/TEST_REPORT.md`](docs/TEST_REPORT.md).
+
+---
+
+## 10. Reset the demo data
+
+* **Live site:** restart or redeploy the service on Render, which re-creates the starting data. The free
+  plan also resets whenever the service sleeps after about 15 idle minutes, so import demo files shortly
+  before presenting.
+* **Local:** stop the server, then from `backend/` run `python scripts/reset_local_demo.py`. It asks you to
+  confirm, and refuses to touch a production or non-SQLite database.
+
+Details: [`docs/DEMO_RESET.md`](docs/DEMO_RESET.md).
+
+---
+
+## 11. Deployment
+
+* **Render:** `render.yaml` is a ready blueprint. Use **New + → Blueprint** and choose this repository. Each
+  push to `main` redeploys automatically. Render generates `SECRET_KEY`.
+* **Docker:** see `Dockerfile` and `docker-compose.yml`.
+
+| Setting | Purpose | Default |
+|---|---|---|
+| `DATABASE_URL` | Database (SQLite file or PostgreSQL URL) | `sqlite:///./apaar_reconx.db` |
+| `JWT_SECRET` or `SECRET_KEY` | Token signing key: **set this in production** | development value |
+| `SEED_ON_STARTUP` | Fill an empty database with starting data | `true` |
+| `PUBLIC_BASE_URL` | Base URL used in certificate QR codes | empty |
+
+---
+
+## 12. Project structure
+
+```
+backend/
+  app/
+    routers/      API endpoints (auth, submissions, students, cases, reports, rules, oversight…)
+    services/     validation engine, case manager, reports, file processing
+    models/       database tables
+    seed/         starting data and sandbox reference records
+  scripts/        demo_e2e.py, generate_demo_dataset.py, reset_local_demo.py
+  tests/          pytest suite
+frontend/
+  src/pages/      one file per screen
+  src/components/ shared UI
+  public/samples/ downloadable sample files
+demo-data/        sample upload files and expected results
+docs/             spec, demo guide, test report, reset procedure
+```
+
+---
+
+## 13. Limitations
+
+* There is no live connection to APAAR, DigiLocker, AISHE or AICTE. IDs are format-checked, and reference data is
+  a fictional sandbox dataset.
+* There are no email or SMS notifications.
+* Evidence is recorded as notes; there is no document upload.
+* Imports never update existing records. Changes go through **Submit Correction**.
+* OCI and foreign-national seats are not tracked separately in the intake reference.
+* The demo deployment uses SQLite and resets on restart. Production should use PostgreSQL.
+* Prototype accounts use fixed passwords. Government SSO is not implemented.
+
+---
+
+## 14. More documentation
+
+* [`docs/SIH_DEMO_GUIDE.md`](docs/SIH_DEMO_GUIDE.md): demonstration script, talking points and judge Q&A
+* [`docs/TEST_REPORT.md`](docs/TEST_REPORT.md): what was tested and the results
+* [`docs/DEMO_RESET.md`](docs/DEMO_RESET.md): resetting the live and local data
+* [`demo-data/README_SYNTHETIC_DATA.md`](demo-data/README_SYNTHETIC_DATA.md): how the sample data is built
+* [`docs/spec.md`](docs/spec.md): full product specification
+
+Developed for Smart India Hackathon 2026 (SIH26263). Registry adapters are simulated; no government system is
+contacted.
